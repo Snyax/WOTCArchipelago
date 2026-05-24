@@ -63,7 +63,7 @@ simulated function ApplyEffectToWorld(const out EffectAppliedData ApplyEffectPar
 	CheckAbility(NewGameState, SourceAbility.GetMyTemplateName(), SourceUnit);
 }
 
-static private function CheckAbility(XComGameState NewGameState, name AbilityTemplateName, XComGameState_Unit UnitState)
+private static function CheckAbility(XComGameState NewGameState, name AbilityTemplateName, XComGameState_Unit UnitState)
 {
 	local CheckInventory			InInventory;
 	local StateObjectReference		ItemRef;
@@ -89,7 +89,7 @@ static private function CheckAbility(XComGameState NewGameState, name AbilityTem
 	}
 }
 
-static private function CheckItem(XComGameState NewGameState, name ItemTemplateName)
+private static function CheckItem(XComGameState NewGameState, name ItemTemplateName)
 {
 	local ItemCategory Category;
 

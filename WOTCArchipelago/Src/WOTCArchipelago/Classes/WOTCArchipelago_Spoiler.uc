@@ -26,9 +26,9 @@ struct native CharStatChange
 	var float Maximum;
 };
 
-var config array<SpoilerEntry>			Spoiler;
-var config array<EnemyRandoEntry>		EnemyRando;
-var config array<CharStatChange>		CharStatChanges;
+var config array<SpoilerEntry>		Spoiler;
+var config array<EnemyRandoEntry>	EnemyRando;
+var config array<CharStatChange>	CharStatChanges;
 
 static function bool GetSpoilerEntryByLocation(name LocationName, out SpoilerEntry Entry)
 {

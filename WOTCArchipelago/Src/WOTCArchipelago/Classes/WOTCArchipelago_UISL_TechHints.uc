@@ -86,7 +86,7 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 }
 
 // Get arbitrary but deterministic hint
-static private function string GetClassHint(string strItem, array<string> arrClassHints)
+private static function string GetClassHint(string strItem, array<string> arrClassHints)
 {
 	local int		Idx;
 	local int		Res;

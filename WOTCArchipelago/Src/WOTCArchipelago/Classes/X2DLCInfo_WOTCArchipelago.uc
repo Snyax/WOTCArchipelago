@@ -71,8 +71,8 @@ static event OnPostTemplatesCreated()
 	if (class'WOTCArchipelago_Spoiler'.static.IsChosenHuntsanityActive())
 	{
 		// Patch chosen hunt covert action templates to alter rewards
-		`AMLOG("Patching Covert Op Templates");
-		IterateTemplatesAllDiff(class'X2CovertActionTemplate', PatchCovertActionTemplates);
+		`AMLOG("Patching Chosen Hunt Covert Op Templates");
+		IterateTemplatesAllDiff(class'X2CovertActionTemplate', PatchChosenHuntCovertActionTemplates);
 	}
 
 	// ITEMSANITY
@@ -80,6 +80,26 @@ static event OnPostTemplatesCreated()
 	// Patch ability templates to add item use check effect
 	`AMLOG("Patching Ability Templates");
 	IterateTemplatesAllDiff(class'X2AbilityTemplate', PatchAbilityTemplates);
+
+	// RANKSANITY
+
+	if (class'WOTCArchipelago_Ranksanity'.default.bEnableRanksanity)
+	{
+		// Patch soldier class templates to prevent promotions
+		`AMLOG("Patching Soldier Class Templates");
+		IterateTemplatesAllDiff(class'X2SoldierClassTemplate', PatchSoldierClassTemplates);
+
+		// Patch reward templates to prevent promotions
+		`AMLOG("Patching Reward Templates");
+		IterateTemplatesAllDiff(class'X2RewardTemplate', PatchRewardTemplates);
+
+		if (!class'WOTCArchipelago_Ranksanity'.default.bDisableFactionSoldierClasses)
+		{
+			// Patch find farthest faction covert action templates to alter soldier staff slots
+			`AMLOG("Patching Find Farthest Faction Covert Action Templates");
+			IterateTemplatesAllDiff(class'X2CovertActionTemplate', PatchFFFCovertActionTemplates);
+		}
+	}
 
 	// ENEMY RANDO
 
@@ -98,7 +118,7 @@ static event OnPostTemplatesCreated()
 }
 
 // Patch research projects to alter effects upon completion
-static private function PatchResearchTemplates(X2DataTemplate DataTemplate)
+private static function PatchResearchTemplates(X2DataTemplate DataTemplate)
 {
 	local X2TechTemplate				TechTemplate;
 	local X2CompletionItemTemplate		CompletionItemTemplate;
@@ -148,7 +168,7 @@ static function HandleResearchCompletion(XComGameState NewGameState, XComGameSta
 }
 
 // Patch items to alter unlock requirements
-static private function PatchItemTemplates(X2DataTemplate DataTemplate)
+private static function PatchItemTemplates(X2DataTemplate DataTemplate)
 {
 	local X2ItemTemplate				ItemTemplate;
 	local int							Idx;
@@ -209,7 +229,7 @@ static private function PatchItemTemplates(X2DataTemplate DataTemplate)
 }
 
 // Patch strategy elements to alter unlock/completion requirements
-static private function PatchStrategyElementTemplates(X2DataTemplate DataTemplate)
+private static function PatchStrategyElementTemplates(X2DataTemplate DataTemplate)
 {
 	local X2FacilityTemplate			FacilityTemplate;
 	local X2FacilityUpgradeTemplate		FacilityUpgradeTemplate;
@@ -332,13 +352,13 @@ static private function PatchStrategyElementTemplates(X2DataTemplate DataTemplat
 	if (bPatched) `AMLOG("Patched " $ DataTemplate.Name);
 }
 
-static private function bool ReturnTrue()
+private static function bool ReturnTrue()
 {
 	return true;
 }
 
 // Patch proving ground projects to alter unlock requirements
-static private function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
+private static function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
 {
 	local X2TechTemplate				TechTemplate;
 	local StrategyRequirement			Requirements;
@@ -379,7 +399,7 @@ static private function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
 }
 
 // Patch mission source templates to disable some optional mission types
-static private function PatchMissionSourceTemplates(X2DataTemplate DataTemplate)
+private static function PatchMissionSourceTemplates(X2DataTemplate DataTemplate)
 {
 	local X2MissionSourceTemplate MissionSourceTemplate;
 
@@ -406,7 +426,7 @@ static private function PatchMissionSourceTemplates(X2DataTemplate DataTemplate)
 }
 
 // Patch covert action risk templates to disable ambush and capture risks
-static private function PatchCovertActionRiskTemplates(X2DataTemplate DataTemplate)
+private static function PatchCovertActionRiskTemplates(X2DataTemplate DataTemplate)
 {
 	local X2CovertActionRiskTemplate CovertActionRiskTemplate;
 
@@ -425,18 +445,18 @@ static private function PatchCovertActionRiskTemplates(X2DataTemplate DataTempla
 	}
 }
 
-static private function bool IsAmbushRiskAvailable(XComGameState_ResistanceFaction FactionState, optional XComGameState NewGameState)
+private static function bool IsAmbushRiskAvailable(XComGameState_ResistanceFaction FactionState, optional XComGameState NewGameState)
 {
 	return !`APCFG(DISABLE_AMBUSH_RISK);
 }
 
-static private function bool IsCaptureRiskAvailable(XComGameState_ResistanceFaction FactionState, optional XComGameState NewGameState)
+private static function bool IsCaptureRiskAvailable(XComGameState_ResistanceFaction FactionState, optional XComGameState NewGameState)
 {
 	return !`APCFG(DISABLE_CAPTURE_RISK);
 }
 
 // Patch chosen hunt covert action templates to alter rewards
-static private function PatchCovertActionTemplates(X2DataTemplate DataTemplate)
+private static function PatchChosenHuntCovertActionTemplates(X2DataTemplate DataTemplate)
 {
 	local X2CovertActionTemplate	CovertActionTemplate;
 	local array<name>				NewRewards;
@@ -458,7 +478,7 @@ static private function PatchCovertActionTemplates(X2DataTemplate DataTemplate)
 }
 
 // Patch ability templates to add item use check effect
-static private function PatchAbilityTemplates(X2DataTemplate DataTemplate)
+private static function PatchAbilityTemplates(X2DataTemplate DataTemplate)
 {
 	local X2AbilityTemplate AbilityTemplate;
 
@@ -472,8 +492,55 @@ static private function PatchAbilityTemplates(X2DataTemplate DataTemplate)
 	}
 }
 
+// Patch soldier class templates to prevent promotions
+private static function PatchSoldierClassTemplates(X2DataTemplate DataTemplate)
+{
+	local X2SoldierClassTemplate SoldierClassTemplate;
+
+	SoldierClassTemplate = X2SoldierClassTemplate(DataTemplate);
+
+	if (class'WOTCArchipelago_Ranksanity'.static.IsEnabled(SoldierClassTemplate.DataName))
+	{
+		SoldierClassTemplate.bBlockRankingUp = true;
+		`AMLOG("Patched " $ SoldierClassTemplate.Name);
+	}
+}
+
+// Patch reward templates to prevent promotions
+private static function PatchRewardTemplates(X2DataTemplate DataTemplate)
+{
+	local X2RewardTemplate RewardTemplate;
+
+	RewardTemplate = X2RewardTemplate(DataTemplate);
+	
+	if (RewardTemplate.DataName == 'Reward_RankUp')
+	{
+		RewardTemplate.GiveRewardFn = class'X2StrategyElement_OverrideRewards'.static.GiveRankUpReward_Override;
+		`AMLOG("Patched " $ RewardTemplate.Name);
+	}
+	else if (RewardTemplate.DataName == 'Reward_Soldier')
+	{
+		RewardTemplate.GenerateRewardFn = class'X2StrategyElement_OverrideRewards'.static.GeneratePersonnelReward_Override;
+		`AMLOG("Patched " $ RewardTemplate.Name);
+	}
+}
+
+// Patch find farthest faction covert action templates to alter soldier staff slots
+private static function PatchFFFCovertActionTemplates(X2DataTemplate DataTemplate)
+{
+	local X2CovertActionTemplate CovertActionTemplate;
+
+	CovertActionTemplate = X2CovertActionTemplate(DataTemplate);
+
+	if (CovertActionTemplate.DataName == 'CovertAction_FindFarthestFaction')
+	{
+		CovertActionTemplate.Slots[0].iMinRank = 0;
+		`AMLOG("Patched " $ CovertActionTemplate.Name);
+	}
+}
+
 // Patch spawn unit ability templates to alter spawned unit
-static private function PatchSpawnUnitAbilityTemplates(X2DataTemplate DataTemplate)
+private static function PatchSpawnUnitAbilityTemplates(X2DataTemplate DataTemplate)
 {
 	local X2AbilityTemplate		AbilityTemplate;
 	local X2Effect				TargetEffect;
@@ -494,7 +561,7 @@ static private function PatchSpawnUnitAbilityTemplates(X2DataTemplate DataTempla
 }
 
 // Patch enemy templates for stat changes and pod generation
-static private function PatchEnemyTemplates(X2DataTemplate DataTemplate)
+private static function PatchEnemyTemplates(X2DataTemplate DataTemplate)
 {
 	local X2CharacterTemplate	CharacterTemplate;
 	local CharStatChange		StatChange;
@@ -567,7 +634,7 @@ static private function PatchEnemyTemplates(X2DataTemplate DataTemplate)
 }
 
 // Print EncounterLists and ConfigurableEncounters for debug purposes
-static private function DebugPrintEncounters()
+private static function DebugPrintEncounters()
 {
 	local SpawnDistributionList			List;
 	local SpawnDistributionListEntry	Entry;
@@ -607,7 +674,7 @@ static event UpdateDLC()
 //                                   HELPER FUCTIONS
 //---------------------------------------------------------------------------------------
 
-static private function IterateTemplatesAllDiff(class TemplateClass, delegate<ModifyTemplate> ModifyTemplateFn)
+private static function IterateTemplatesAllDiff(class TemplateClass, delegate<ModifyTemplate> ModifyTemplateFn)
 {
     local X2DataTemplate                            IterateTemplate;
     local X2DataTemplate                            DataTemplate;
@@ -700,7 +767,7 @@ static private function IterateTemplatesAllDiff(class TemplateClass, delegate<Mo
     }    
 }
 
-static private function ModifyTemplateAllDiff(name TemplateName, class TemplateClass, delegate<ModifyTemplate> ModifyTemplateFn)
+private static function ModifyTemplateAllDiff(name TemplateName, class TemplateClass, delegate<ModifyTemplate> ModifyTemplateFn)
 {
     local X2DataTemplate                           DataTemplate;
     local array<X2DataTemplate>                    DataTemplates;
@@ -746,7 +813,7 @@ static private function ModifyTemplateAllDiff(name TemplateName, class TemplateC
     }
 }
 
-static private function X2DLCInfo_WOTCArchipelago GetCDO()
+private static function X2DLCInfo_WOTCArchipelago GetCDO()
 {
     return X2DLCInfo_WOTCArchipelago(class'XComEngine'.static.GetClassDefaultObjectByName(default.Class.Name));
 }

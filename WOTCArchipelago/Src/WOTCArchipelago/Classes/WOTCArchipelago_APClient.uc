@@ -13,6 +13,7 @@ var private int SinceLastTick;
 var private WOTCArchipelago_TcpLink TickLink;
 
 var private string TechCompletedType;
+var private string PromotionType;
 var private string CovertActionRewardType;
 var private string ResourceType;
 var private string StaffType;
@@ -73,6 +74,7 @@ private function Initialize()
 	TickLink = Spawn(class'WOTCArchipelago_TcpLink');
 
 	TechCompletedType = "[TechCompleted]";
+	PromotionType = "[Promotion]";
 	CovertActionRewardType = "[CovertActionReward]";
 	ResourceType = "[Resource]";
 	StaffType = "[Staff]";
@@ -88,8 +90,9 @@ private function Initialize()
 //
 // Research/Shadow Chamber Projects:	TechTemplate.DataName
 // Enemy Kills:							'Kill' + CharTemplate.CharacterGroupName
-// Item Uses:							'Use' + ItemTemplate.DataName (except experimental items)
+// Item Uses:							'Use' + ItemTemplate.DataName
 // Chosen Hunt Covert Actions:			'ChosenHuntPt' + [1/2/3] + ':' + [1/2/3]
+// Soldier Class Ranks:					SoldierClassTemplate.DataName + 'Rank' + [MinRank..MaxRank]
 function OnCheckReached(XComGameState NewGameState, name CheckName)
 {
 	local WOTCArchipelago_TcpLink Link;
@@ -100,7 +103,7 @@ function OnCheckReached(XComGameState NewGameState, name CheckName)
 	Link.Call("/Check/" $ CheckName, CheckResponseHandler, CheckErrorHandler);
 }
 
-private final function CheckResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+private function CheckResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	local array<string>		Messages;
 	local string			Message;
@@ -118,7 +121,7 @@ private final function CheckResponseHandler(WOTCArchipelago_TcpLink Link, HttpRe
 	ClearCheckBuffer();
 }
 
-private final function CheckErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+private function CheckErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	`AMLOG("Check Error Status: " $ Resp.ResponseCode);
 
@@ -137,12 +140,12 @@ private final function CheckErrorHandler(WOTCArchipelago_TcpLink Link, HttpRespo
 	Link.Destroy();
 }
 
-private final function AppendCheckBuffer(name CheckName)
+private function AppendCheckBuffer(name CheckName)
 {
 	if (CheckBuffer.Find(CheckName) == INDEX_NONE) CheckBuffer.AddItem(CheckName);
 }
 
-private final function ClearCheckBuffer()
+private function ClearCheckBuffer()
 {
 	local XComGameState		NewGameState;
 	local name				CheckName;
@@ -174,13 +177,13 @@ function CreateServerHint(XComGameState NewGameState, name CheckName)
 	Link.Call("/Hint/" $ CheckName, HintResponseHandler, HintErrorHandler);
 }
 
-private final function HintResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+private function HintResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	Link.Destroy();
 	ClearCheckBuffer();
 }
 
-private final function HintErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+private function HintErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	`AMLOG("Hint Error Status: " $ Resp.ResponseCode);
 	Link.Destroy();
@@ -188,13 +191,21 @@ private final function HintErrorHandler(WOTCArchipelago_TcpLink Link, HttpRespon
 
 
 //=======================================================================================
-//                                       TICK
+//                                      UPDATE
 //---------------------------------------------------------------------------------------
 
 function Update()
 {
-	local string Path;
+	if (SinceLastTick % 4 == 0) DoChores();
 
+	// Periodically send ticks
+	if (SinceLastTick++ < 25) return;
+	SinceLastTick = 0;
+	SendTick();
+}
+
+function DoChores()
+{
 	// Handle add item
 	if (AddItemNames.Length > 0) HandleAddItem();
 
@@ -205,30 +216,13 @@ function Update()
 		bShowCustomPopup = false;
 	}
 
-	// Handle tick count
-	SinceLastTick++;
-	if (SinceLastTick < 25) return;
-	SinceLastTick = 0;
-
 	HandleObjectiveCompletion();
 	HandleStrongholdUnlock();
 	HandleReplaceFactionHero();
-	
-	// Strategy
-	if (`HQPRES != none)
-	{
-		Path = "/Tick/Strategy/" $ `APCTRREAD('ItemsReceivedStrategy');
-		TickLink.Call(Path, TickStrategyResponseHandler, TickErrorHandler);
-	}
-	// Tactical
-	else
-	{
-		Path = "/Tick/Tactical/" $ `APCTRREAD('ItemsReceivedTactical');
-		TickLink.Call(Path, TickTacticalResponseHandler, TickErrorHandler);
-	}
+	HandleRanksanityPromotions();
 }
 
-private final function HandleAddItem()
+private function HandleAddItem()
 {
 	local XComGameState		NewGameState;
 	local int				Idx;
@@ -243,7 +237,7 @@ private final function HandleAddItem()
 			AddItemQuantities.AddItem(1);
 		}
 
-		AddItemToHQInventory(NewGameState, AddItemNames[Idx], AddItemQuantities[Idx]);
+		`APADDITEM(NewGameState, AddItemNames[Idx], AddItemQuantities[Idx]);
 	}
 	
 	`GAMERULES.SubmitGameState(NewGameState);
@@ -252,10 +246,10 @@ private final function HandleAddItem()
 	AddItemQuantities.Length = 0;
 }
 
-private final function HandleObjectiveCompletion()
+private static function HandleObjectiveCompletion()
 {
-	local XComGameState						NewGameState;
 	local XComGameState_HeadquartersXCom	XComHQ;
+	local XComGameState						NewGameState;
 
 	XComHQ = `XCOMHQ;
 
@@ -277,7 +271,7 @@ private final function HandleObjectiveCompletion()
 	`APCTRDEC('AvatarCorpseObjectiveCompleted');
 }
 
-private final function HandleStrongholdUnlock()
+private static function HandleStrongholdUnlock()
 {
 	local XComGameState_AdventChosen ChosenState;
 
@@ -304,7 +298,22 @@ private final function HandleStrongholdUnlock()
 	}
 }
 
-private final function HandleReplaceFactionHero()
+private static function UnlockChosenStronghold(XComGameState_AdventChosen ChosenState)
+{
+	local XComGameState NewGameState;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Unlocking chosen stronghold mission");
+
+	ChosenState = XComGameState_AdventChosen(NewGameState.ModifyStateObject(class'XComGameState_AdventChosen', ChosenState.ObjectID));
+	ChosenState.MakeStrongholdMissionVisible(NewGameState);
+	ChosenState.MakeStrongholdMissionAvailable(NewGameState);
+
+	`GAMERULES.SubmitGameState(NewGameState);
+
+	`AMLOG("Unlocked stronghold of " $ ChosenState.GetMyTemplateName());
+}
+
+private static function HandleReplaceFactionHero()
 {
 	local XComGameStateHistory				History;
 	local XComGameState_HeadquartersXCom	XComHQ;
@@ -341,13 +350,68 @@ private final function HandleReplaceFactionHero()
 		if (!bSoldierPresent)
 		{
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Replace faction hero");
-			AddStaffToHQCrew(NewGameState, CharacterClass);
+			`APADDSTAFF(NewGameState, CharacterClass);
 			`GAMERULES.SubmitGameState(NewGameState);
 		}
 	}
 }
 
-private final function TickStrategyResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+static function HandleRanksanityPromotions(optional XComGameState NewGameState)
+{
+	local StateObjectReference	UnitRef;
+	local XComGameState_Unit	UnitState;
+	local bool					bLocalGameState;
+
+	if (!class'WOTCArchipelago_Ranksanity'.default.bEnableRanksanity) return;
+
+	bLocalGameState = false;
+	if (NewGameState == none)
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Handle ranksanity promotions and location checks");
+		bLocalGameState = true;
+	}
+	
+	foreach `XCOMHQ.Crew(UnitRef)
+	{
+		// Filter non-soldier units and disabled soldier classes
+		UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
+		if (!UnitState.IsSoldier()) continue;
+		if (!class'WOTCArchipelago_Ranksanity'.static.IsEnabled(UnitState.GetSoldierClassTemplateName())) continue;
+		
+		// Grant missing promotions (from received rank items)
+		class'WOTCArchipelago_Ranksanity'.static.GrantMissingPromotions(NewGameState, UnitRef);
+
+		// Send missing rank checks (determine reached rank from total kills, can be triggered by promotions above)
+		class'WOTCArchipelago_Ranksanity'.static.SendMissingChecks(NewGameState, UnitRef);
+	}
+
+	if (bLocalGameState) `GAMERULES.SubmitGameState(NewGameState);
+}
+
+
+//=======================================================================================
+//                                       TICK
+//---------------------------------------------------------------------------------------
+
+function SendTick()
+{
+	local string Path;
+
+	// Strategy
+	if (`HQPRES != none)
+	{
+		Path = "/Tick/Strategy/" $ `APCTRREAD('ItemsReceivedStrategy');
+		TickLink.Call(Path, TickStrategyResponseHandler, TickErrorHandler);
+	}
+	// Tactical
+	else
+	{
+		Path = "/Tick/Tactical/" $ `APCTRREAD('ItemsReceivedTactical');
+		TickLink.Call(Path, TickTacticalResponseHandler, TickErrorHandler);
+	}
+}
+
+private function TickStrategyResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	local array<string>		Messages;
 	local int				NumMessages;
@@ -358,14 +422,14 @@ private final function TickStrategyResponseHandler(WOTCArchipelago_TcpLink Link,
 
 	Messages = SplitString(Resp.Body, "\n\n", true);
 
-	// Max 5 messages per tick
-	NumMessages = Min(5, Messages.Length);
+	// Max 5 messages per tick (plus 1 state message)
+	NumMessages = Min(5 + 1, Messages.Length);
 
 	for (ItemNr = 0; ItemNr < NumMessages; ItemNr++)
 	{
 		Message = Messages[ItemNr];
 		
-		// Check for integer message
+		// Check for integer state message
 		if (Message == string(int(Message)))
 		{
 			// Abort if state is mismatched
@@ -380,7 +444,7 @@ private final function TickStrategyResponseHandler(WOTCArchipelago_TcpLink Link,
 	ClearCheckBuffer();
 }
 
-private final function TickTacticalResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+private function TickTacticalResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	local array<string>		Messages;
 	local int				NumMessages;
@@ -391,14 +455,14 @@ private final function TickTacticalResponseHandler(WOTCArchipelago_TcpLink Link,
 
 	Messages = SplitString(Resp.Body, "\n\n", true);
 
-	// Max 5 messages per tick
-	NumMessages = Min(5, Messages.Length);
+	// Max 5 messages per tick (plus 1 state message)
+	NumMessages = Min(5 + 1, Messages.Length);
 
 	for (ItemNr = 0; ItemNr < NumMessages; ItemNr++)
 	{
 		Message = Messages[ItemNr];
 
-		// Check for integer message
+		// Check for integer state message
 		if (Message == string(int(Message)))
 		{
 			// Abort if state is mismatched
@@ -413,7 +477,7 @@ private final function TickTacticalResponseHandler(WOTCArchipelago_TcpLink Link,
 	ClearCheckBuffer();
 }
 
-private final function TickErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+private function TickErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	`AMLOG("Tick Error Status: " $ Resp.ResponseCode);
 
@@ -437,13 +501,12 @@ private final function TickErrorHandler(WOTCArchipelago_TcpLink Link, HttpRespon
 //                                      RESPONSE
 //---------------------------------------------------------------------------------------
 
-private final function HandleMessage(string Message)
+private function HandleMessage(string Message)
 {
 	local array<string>		Lines;
 	local array<string>		ItemData;
 	local name				ItemName;
 	local int				ItemValue;
-
 	local XComGameState		NewGameState;
 
 	Lines = SplitString(Message, "\n", true);
@@ -454,9 +517,17 @@ private final function HandleMessage(string Message)
 		ItemName = name(Mid(Lines[0], Len(TechCompletedType)));
 
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Adding TechCompleted item to HQ inventory");
-		AddItemToHQInventory(NewGameState, ItemName);
+		`APADDITEM(NewGameState, ItemName);
 		`XEVENTMGR.TriggerEvent('ResearchCompleted', , , NewGameState); // Trigger ResearchCompleted event
 		`GAMERULES.SubmitGameState(NewGameState);
+	}
+	// Promotion
+	else if (Left(Lines[0], Len(PromotionType)) == PromotionType)
+	{
+		ItemName = name(Mid(Lines[0], Len(PromotionType), Len(Lines[0]) - Len(PromotionType) - 4));  // Cut off trailing "Rank"
+		ItemName = class'X2Item_APCounterResources'.static.GetRankReceivedCounterName(ItemName);  // Write counter name into ItemName
+		`APCTRINC(ItemName);
+		HandleRanksanityPromotions();  // Promote soldiers immediately
 	}
 	// CovertActionReward
 	else if (Left(Lines[0], Len(CovertActionRewardType)) == CovertActionRewardType)
@@ -475,7 +546,7 @@ private final function HandleMessage(string Message)
 		ItemValue = int(ItemData[1]);
 
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Adding resource item to HQ inventory");
-		AddItemToHQInventory(NewGameState, ItemName, ItemValue);
+		`APADDITEM(NewGameState, ItemName, ItemValue);
 		`GAMERULES.SubmitGameState(NewGameState);
 	}
 	// Staff
@@ -486,7 +557,7 @@ private final function HandleMessage(string Message)
 		ItemValue = int(ItemData[1]);
 
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Adding staff to HQ crew");
-		AddStaffToHQCrew(NewGameState, ItemName, ItemValue);
+		`APADDSTAFF(NewGameState, ItemName, ItemValue);
 		`GAMERULES.SubmitGameState(NewGameState);
 	}
 	// Trap
@@ -511,53 +582,7 @@ private final function HandleMessage(string Message)
 	RaiseDialog(Lines[1], Lines[2]);
 }
 
-static final function AddItemToHQInventory(XComGameState NewGameState, const name TemplateName, optional int Quantity = 1)
-{
-    local XComGameState_HeadquartersXCom	XComHQ;
-	local X2ItemTemplateManager             ItemMgr;
-	local X2ItemTemplate					ItemTemplate;
-    local XComGameState_Item				ItemState;
-	
-    XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', `XCOMHQ.ObjectID));
-
-	// Create ItemState
-	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
-	ItemTemplate = ItemMgr.FindItemTemplate(TemplateName);
-    ItemState = ItemTemplate.CreateInstanceFromTemplate(NewGameState);
-	ItemState.Quantity = Quantity;
-	
-	// Add item to inventory
-    XComHQ.PutItemInInventory(NewGameState, ItemState);
-
-	// Do not print to log for story objective completion resource items
-	if (TemplateName == 'PsiGateObjectiveCompleted') return;
-	if (TemplateName == 'StasisSuitObjectiveCompleted') return;
-	if (TemplateName == 'AvatarCorpseObjectiveCompleted') return;
-	`AMLOG("Added item to HQ inventory: " $ TemplateName $ " x" $ Quantity);
-}
-
-static final function RemoveItemFromHQInventory(XComGameState NewGameState, const name TemplateName, optional int Quantity = 1)
-{
-	local XComGameState_HeadquartersXCom	XComHQ;
-	local XComGameState_Item				ItemState;
-
-	// Retrieve ItemState
-	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', `XCOMHQ.ObjectID));
-	ItemState = XComHQ.GetItemByName(TemplateName);
-
-	if (ItemState == none) return;
-
-	// Remove item from inventory
-	XComHQ.RemoveItemFromInventory(NewGameState, ItemState.GetReference(), Quantity);
-
-	// Do not print to log for story objective completion resource items
-	if (TemplateName == 'PsiGateObjectiveCompleted') return;
-	if (TemplateName == 'StasisSuitObjectiveCompleted') return;
-	if (TemplateName == 'AvatarCorpseObjectiveCompleted') return;
-	`AMLOG("Removed item from HQ inventory: " $ TemplateName $ " x" $ Quantity);
-}
-
-static private final function GiveCovertActionReward(XComGameState NewGameState, const name RewardName)
+private static function GiveCovertActionReward(XComGameState NewGameState, name RewardName)
 {
 	if (RewardName == 'FactionInfluence') RaiseFactionInfluence(NewGameState);
 	else if (RewardName == 'AssassinStronghold') `APCTRINC('AssassinStrongholdReceived', NewGameState);
@@ -565,7 +590,7 @@ static private final function GiveCovertActionReward(XComGameState NewGameState,
 	else if (RewardName == 'WarlockStronghold') `APCTRINC('WarlockStrongholdReceived', NewGameState);
 }
 
-static private final function RaiseFactionInfluence(XComGameState NewGameState, optional XComGameState_ResistanceFaction FactionState)
+private static function RaiseFactionInfluence(XComGameState NewGameState, optional XComGameState_ResistanceFaction FactionState)
 {
 	if (FactionState == none)
 	{
@@ -597,44 +622,7 @@ static private final function RaiseFactionInfluence(XComGameState NewGameState, 
 	`AMLOG("Increased influence of " $ FactionState.GetMyTemplateName());
 }
 
-static private final function UnlockChosenStronghold(XComGameState_AdventChosen ChosenState)
-{
-	local XComGameState NewGameState;
-
-	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Unlocking chosen stronghold mission");
-
-	ChosenState = XComGameState_AdventChosen(NewGameState.ModifyStateObject(class'XComGameState_AdventChosen', ChosenState.ObjectID));
-	ChosenState.MakeStrongholdMissionVisible(NewGameState);
-	ChosenState.MakeStrongholdMissionAvailable(NewGameState);
-
-	`GAMERULES.SubmitGameState(NewGameState);
-
-	`AMLOG("Unlocked stronghold of " $ ChosenState.GetMyTemplateName());
-}
-
-static private final function AddStaffToHQCrew(XComGameState NewGameState, const name TemplateName, optional int Quantity = 1)
-{
-	local XComGameState_HeadquartersXCom	XComHQ;
-	local XComGameState_Unit				UnitState;
-	local int								Idx;
-
-	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', `XCOMHQ.ObjectID));
-
-	for (Idx = 0; Idx < Quantity; Idx++)
-	{
-		// Create UnitState
-		UnitState = `CHARACTERPOOLMGR.CreateCharacter(NewGameState, `XPROFILESETTINGS.Data.m_eCharPoolUsage, TemplateName);
-		UnitState.RandomizeStats();
-
-		// Add staff to crew
-		XComHQ.AddToCrew(NewGameState, UnitState);
-		XComHQ.HandlePowerOrStaffingChange(NewGameState);
-	}
-
-	`AMLOG("Added staff to HQ crew: " $ TemplateName $ " x" $ Quantity);
-}
-
-static private final function TriggerTrap(XComGameState NewGameState, const name TrapName, optional int Quantity = 1)
+private static function TriggerTrap(XComGameState NewGameState, name TrapName, optional int Quantity = 1)
 {
 	local XComGameState_HeadquartersAlien	AlienHQ;
 	local int								StartingForceLevel;
@@ -643,7 +631,9 @@ static private final function TriggerTrap(XComGameState NewGameState, const name
 
 	// Ignore traps on the first day if the setting is active
 	if (class'X2StrategyGameRulesetDataStructures'.static.IsFirstDay(class'XComGameState_GeoscapeEntity'.static.GetCurrentTime()))
+	{
 		if (`APCFG(NO_STARTING_TRAPS)) return;
+	}
 
 	AlienHQ = XComGameState_HeadquartersAlien(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersAlien'));
 	AlienHQ = XComGameState_HeadquartersAlien(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersAlien', AlienHQ.ObjectID));
@@ -671,52 +661,10 @@ static private final function TriggerTrap(XComGameState NewGameState, const name
 
 
 //=======================================================================================
-//                                     COUNTERS
-//---------------------------------------------------------------------------------------
-
-static function int IncrementCounter(const name CounterName, optional XComGameState NewGameState)
-{
-	if (NewGameState != none)
-	{
-		AddItemToHQInventory(NewGameState, CounterName);
-	}
-	else
-	{
-		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Adding counter item to HQ Inventory");
-		AddItemToHQInventory(NewGameState, CounterName);
-		`GAMERULES.SubmitGameState(NewGameState);
-	}
-
-	return ReadCounter(CounterName);
-}
-
-static function int DecrementCounter(const name CounterName, optional XComGameState NewGameState)
-{
-	if (NewGameState != none)
-	{
-		RemoveItemFromHQInventory(NewGameState, CounterName);
-	}
-	else
-	{
-		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Removing counter item from HQ Inventory");
-		RemoveItemFromHQInventory(NewGameState, CounterName);
-		`GAMERULES.SubmitGameState(NewGameState);
-	}
-
-	return ReadCounter(CounterName);
-}
-
-static function int ReadCounter(const name CounterName)
-{
-	return `XCOMHQ.GetNumItemInInventory(CounterName);
-}
-
-
-//=======================================================================================
 //                                      DIALOG
 //---------------------------------------------------------------------------------------
 
-static private final function RaiseDialog(string Title, string Text)
+private static function RaiseDialog(string Title, string Text)
 {
 	local TDialogueBoxData				kDialogData;
 	local SeqAct_ShowDramaticMessage	SeqActShowDramaticMessage;

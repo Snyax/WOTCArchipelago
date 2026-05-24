@@ -202,7 +202,7 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 	UpdateTrainRookieDays();
 }
 
-static private function bool ShouldLoadAPDefaults()
+private static function bool ShouldLoadAPDefaults()
 {
 	if (class'WOTCArchipelago_Defaults'.default.DEF_AP_GEN_ID == "")
 	{
@@ -254,7 +254,7 @@ static function LoadAndSaveAPDefaults()
 }
 
 // Set default train rookie days of XComHQ's CDO on load and save
-static private function UpdateTrainRookieDays()
+private static function UpdateTrainRookieDays()
 {
 	local WOTCArchipelago_MCMScreen			MCMScreenCDO;
 	local XComGameState_HeadquartersXCom	XComHQCDO;

@@ -26,7 +26,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	return CompletionItems;
 }
 
-static private function X2DataTemplate CreateResearchCompletedTemplate(name CompletionItemName, name TechTemplateName)
+private static function X2DataTemplate CreateResearchCompletedTemplate(name CompletionItemName, name TechTemplateName)
 {
 	local X2CompletionItemTemplate Template;
 

@@ -45,10 +45,13 @@
     <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_MCMScreen.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_Ranksanity.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_Spoiler.uc">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_StringHelpers.uc">
+    <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_UISL_Avenger.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_UISL_PG.uc">
@@ -58,6 +61,9 @@
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_UISL_TechHints.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_Utilities.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_Version.uc">
@@ -134,6 +140,9 @@
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\ModConfigMenuAPI\MCM_API_Includes.uci">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\X2StrategyElement_OverrideRewards.uc">
       <SubType>Content</SubType>
     </Content>
   </ItemGroup>

@@ -11,7 +11,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	return Templates;
 }
 
-static private function X2DataTemplate CreateTurnStartActionPointAbility(name TemplateName, int NumActionPoints)
+private static function X2DataTemplate CreateTurnStartActionPointAbility(name TemplateName, int NumActionPoints)
 {
 	local X2AbilityTemplate						Template;
 	local X2AbilityTrigger_UnitPostBeginPlay	Trigger;
@@ -42,7 +42,7 @@ static private function X2DataTemplate CreateTurnStartActionPointAbility(name Te
 	return Template;
 }
 
-static private function X2DataTemplate CreateNeverConsumeAllPointsAbility()
+private static function X2DataTemplate CreateNeverConsumeAllPointsAbility()
 {
 	local X2AbilityTemplate						Template;
 	local X2AbilityTrigger_UnitPostBeginPlay	Trigger;

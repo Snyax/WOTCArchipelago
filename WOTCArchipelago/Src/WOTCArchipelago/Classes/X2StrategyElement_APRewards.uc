@@ -36,10 +36,7 @@ static function bool IsAPChosenHuntRewardAvailable(optional XComGameState NewGam
 	if (FactionState != none)
 	{
 		ChosenState = FactionState.GetRivalChosen();
-		if (FactionState.bMetXCom && ChosenState.bMetXCom)
-		{
-			return true;
-		}
+		if (FactionState.bMetXCom && ChosenState.bMetXCom) return true;
 	}
 
 	return false;

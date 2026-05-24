@@ -3,17 +3,22 @@
 
 `define APCLIENT class'WOTCArchipelago_APClient'.static.GetAPClient()
 
-`define APADDITEM(State, Name, Count) class'WOTCArchipelago_APClient'.static.AddItemToHQInventory(`State, `Name, `Count)
-
-`define APCTRINC(Ctr) class'WOTCArchipelago_APClient'.static.IncrementCounter(`Ctr)
-`define APCTRINC(Ctr, State) class'WOTCArchipelago_APClient'.static.IncrementCounter(`Ctr, `State)
-
-`define APCTRDEC(Ctr) class'WOTCArchipelago_APClient'.static.DecrementCounter(`Ctr)
-`define APCTRDEC(Ctr, State) class'WOTCArchipelago_APClient'.static.DecrementCounter(`Ctr, `State)
-
-`define APCTRREAD(Ctr) class'WOTCArchipelago_APClient'.static.ReadCounter(`Ctr)
-
 `define APCFG(Var) class'WOTCArchipelago_MCMScreen'.static.get`{Var} ()
 `define APCFGFN(Var) class'WOTCArchipelago_MCMScreen'.static.get`{Var}
 
-`define APUNITINFO(Str, Unit) class'WOTCArchipelago_StringHelpers'.static.InsertUnitInfo(`Str, `Unit)
+`define APADDITEM(State, Name) class'WOTCArchipelago_Utilities'.static.AddItemToHQInventory(`State, `Name)
+`define APADDITEM(State, Name, Count) class'WOTCArchipelago_Utilities'.static.AddItemToHQInventory(`State, `Name, `Count)
+
+`define APADDSTAFF(State, Name) class'WOTCArchipelago_Utilities'.static.AddStaffToHQCrew(`State, `Name)
+`define APADDSTAFF(State, Name, Count) class'WOTCArchipelago_Utilities'.static.AddStaffToHQCrew(`State, `Name, `Count)
+
+`define APCTRREAD(Ctr) class'WOTCArchipelago_Utilities'.static.ReadCounter(`Ctr)
+`define APCTRREAD(Ctr, State) class'WOTCArchipelago_Utilities'.static.ReadCounter(`Ctr, `State)
+
+`define APCTRINC(Ctr) class'WOTCArchipelago_Utilities'.static.IncrementCounter(`Ctr)
+`define APCTRINC(Ctr, State) class'WOTCArchipelago_Utilities'.static.IncrementCounter(`Ctr, `State)
+
+`define APCTRDEC(Ctr) class'WOTCArchipelago_Utilities'.static.DecrementCounter(`Ctr)
+`define APCTRDEC(Ctr, State) class'WOTCArchipelago_Utilities'.static.DecrementCounter(`Ctr, `State)
+
+`define APUNITINFO(Str, Unit) class'WOTCArchipelago_Utilities'.static.InsertUnitInfo(`Str, `Unit)

@@ -11,6 +11,7 @@ var localized string strSkippedCouncilMission;
 var localized string strSkippedResistanceOp;
 var localized string strSkippedRewardCollection;
 
+
 // SPAWN OVERRIDE FUNCTIONS
 
 static function SpawnSupplyRaidMission_Override(XComGameState NewGameState, int MissionMonthIndex)
@@ -234,7 +235,7 @@ static function ResOpOnSuccess_Override(XComGameState NewGameState, XComGameStat
 
 // HELPER FUNCTIONS
 
-static private function SkipMission(XComGameState NewGameState, XComGameState_MissionSite MissionState)
+private static function SkipMission(XComGameState NewGameState, XComGameState_MissionSite MissionState)
 {
 	local XComGameStateHistory History;
 	local XComGameState_HeadquartersXCom XComHQ;
@@ -297,7 +298,7 @@ static private function SkipMission(XComGameState NewGameState, XComGameState_Mi
 	MissionState.GetMissionSource().OnSuccessFn(NewGameState, MissionState);
 }
 
-static private function XComGameState_MissionSite BuildResOpMission(XComGameState NewGameState, X2MissionSourceTemplate MissionSource, optional bool bNoPOI)
+private static function XComGameState_MissionSite BuildResOpMission(XComGameState NewGameState, X2MissionSourceTemplate MissionSource, optional bool bNoPOI)
 {
 	local X2StrategyElementTemplateManager StratMgr;
 	local XComGameState_MissionSite MissionState;
@@ -371,7 +372,7 @@ static private function XComGameState_MissionSite BuildResOpMission(XComGameStat
 	return MissionState;
 }
 
-static private function AddTacticalTagToRewardUnit(XComGameState NewGameState, XComGameState_Reward RewardState, name TacticalTag)
+private static function AddTacticalTagToRewardUnit(XComGameState NewGameState, XComGameState_Reward RewardState, name TacticalTag)
 {
 	local XComGameState_Unit UnitState;
 
@@ -382,7 +383,7 @@ static private function AddTacticalTagToRewardUnit(XComGameState NewGameState, X
 	}
 }
 
-static private function GiveSupplyRaidSkipRewards()
+private static function GiveSupplyRaidSkipRewards()
 {
 	local WOTCArchipelago_APClient APClient;
 
@@ -401,7 +402,7 @@ static private function GiveSupplyRaidSkipRewards()
 	APClient.AddItemQuantities.AddItem(GetRandomAmount(default.SupplyRaidSkipMaxCores));
 }
 
-static private function int GetRandomAmount(int MaxAmount)
+private static function int GetRandomAmount(int MaxAmount)
 {
 	local float Mult;
 

@@ -2,7 +2,9 @@ class X2Item_APCounterResources extends X2Item;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
-	local array<X2DataTemplate> APCounterItems;
+	local array<X2DataTemplate>		APCounterItems;
+	local array<name>				RanksanitySoldierClasses;
+	local name						SoldierClass;
 
 	// Items Received
 	APCounterItems.AddItem(CreateCounterTemplate('ItemsReceivedStrategy'));
@@ -25,6 +27,14 @@ static function array<X2DataTemplate> CreateTemplates()
 	APCounterItems.AddItem(CreateCounterTemplate('PsiGateObjectiveCompleted'));
 	APCounterItems.AddItem(CreateCounterTemplate('StasisSuitObjectiveCompleted'));
 	APCounterItems.AddItem(CreateCounterTemplate('AvatarCorpseObjectiveCompleted'));
+
+	// Ranksanity Promotions Sent/Received
+	RanksanitySoldierClasses = class'WOTCArchipelago_Ranksanity'.static.GetEnabledSoldierClasses();
+	foreach RanksanitySoldierClasses(SoldierClass)
+	{
+		APCounterItems.AddItem(CreateCounterTemplate(GetRankSentCounterName(SoldierClass)));
+		APCounterItems.AddItem(CreateCounterTemplate(GetRankReceivedCounterName(SoldierClass)));
+	}
 
 	return APCounterItems;
 }
@@ -72,15 +82,15 @@ static function GetRecentCompletedChosenHuntFaction(out XComGameState_Resistance
 		{
 			case 'Faction_Reapers':
 				CheckedCounterName = 'ReaperChosenHuntChecked';
-				if (`APCTRREAD(CheckedCounterName) < NumReaperChosenHuntCompleted) return;
+				if (`APCTRREAD(CheckedCounterName, NewGameState) < NumReaperChosenHuntCompleted) return;
 				break;
 			case 'Faction_Skirmishers':
 				CheckedCounterName = 'SkirmisherChosenHuntChecked';
-				if (`APCTRREAD(CheckedCounterName) < NumSkirmisherChosenHuntCompleted) return;
+				if (`APCTRREAD(CheckedCounterName, NewGameState) < NumSkirmisherChosenHuntCompleted) return;
 				break;
 			case 'Faction_Templars':
 				CheckedCounterName = 'TemplarChosenHuntChecked';
-				if (`APCTRREAD(CheckedCounterName) < NumTemplarChosenHuntCompleted) return;
+				if (`APCTRREAD(CheckedCounterName, NewGameState) < NumTemplarChosenHuntCompleted) return;
 				break;
 		}
 	}
@@ -89,7 +99,17 @@ static function GetRecentCompletedChosenHuntFaction(out XComGameState_Resistance
 	FactionState = none;
 }
 
-static private function X2DataTemplate CreateCounterTemplate(name TemplateName)
+static function name GetRankSentCounterName(name SoldierClass)
+{
+	return name("RankSent" $ SoldierClass);
+}
+
+static function name GetRankReceivedCounterName(name SoldierClass)
+{
+	return name("RankReceived" $ SoldierClass);
+}
+
+private static function X2DataTemplate CreateCounterTemplate(name TemplateName)
 {
 	local X2ItemTemplate Template;
 

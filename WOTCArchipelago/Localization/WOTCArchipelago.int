@@ -1,4 +1,4 @@
-[WOTCArchipelago_StringHelpers]
+[WOTCArchipelago_Utilities]
 strFirstName="{FirstName}"
 strLastName="{LastName}"
 strNickName="{NickName}"
