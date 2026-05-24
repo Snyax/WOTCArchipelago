@@ -447,12 +447,12 @@ private static function PatchCovertActionRiskTemplates(X2DataTemplate DataTempla
 
 private static function bool IsAmbushRiskAvailable(XComGameState_ResistanceFaction FactionState, optional XComGameState NewGameState)
 {
-	return !`APCFG(DISABLE_AMBUSH_RISK);
+	return !`APCFG(DISABLE_AMBUSH_RISK) && class'X2StrategyElement_DefaultCovertActionRisks'.static.IsRivalChosenAlive(FactionState, NewGameState);
 }
 
 private static function bool IsCaptureRiskAvailable(XComGameState_ResistanceFaction FactionState, optional XComGameState NewGameState)
 {
-	return !`APCFG(DISABLE_CAPTURE_RISK);
+	return !`APCFG(DISABLE_CAPTURE_RISK) && class'X2StrategyElement_DefaultCovertActionRisks'.static.IsRivalChosenAlive(FactionState, NewGameState);
 }
 
 // Patch chosen hunt covert action templates to alter rewards
