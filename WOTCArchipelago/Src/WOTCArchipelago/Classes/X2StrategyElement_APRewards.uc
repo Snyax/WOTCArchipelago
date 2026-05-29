@@ -1,5 +1,4 @@
-class X2StrategyElement_APRewards extends X2StrategyElement_XpackRewards
-	dependson(X2RewardTemplate);
+class X2StrategyElement_APRewards extends X2StrategyElement_XpackRewards;
 
 var localized string strAPChosenHuntReward;
 var localized string strAPChosenHuntRewardPreview;
