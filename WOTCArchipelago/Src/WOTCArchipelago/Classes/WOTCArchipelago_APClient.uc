@@ -2,11 +2,6 @@ class WOTCArchipelago_APClient extends Actor
 		config(WOTCArchipelago)
 		dependson(WOTCArchipelago_TcpLink);
 
-struct native Translation {
-	var name WorldName;
-	var name ModName;
-};
-
 var array<name> AddItemNames;
 var array<int> AddItemQuantities;
 
@@ -29,8 +24,6 @@ var private array<name> CheckBuffer;
 var config bool bRequirePsiGate;
 var config bool bRequireStasisSuit;
 var config bool bRequireAvatarCorpse;
-
-var config array<Translation> LocationTranslator;
 
 var localized string strRequestTimedOut;
 var localized string strRequestTimedOutDetails;
@@ -102,18 +95,7 @@ private function Initialize()
 // Soldier Class Ranks:					SoldierClassTemplate.DataName + 'Rank' + [MinRank..MaxRank]
 function OnCheckReached(XComGameState NewGameState, name CheckName)
 {
-	local Translation				Entry;
-	local WOTCArchipelago_TcpLink	Link;
-
-	// Translate location name (for APWorld mods)
-	foreach default.LocationTranslator(Entry)
-	{
-		if (CheckName == Entry.ModName)
-		{
-			CheckName = Entry.WorldName;
-			break;
-		}
-	}
+	local WOTCArchipelago_TcpLink Link;
 	
 	`AMLOG("Check reached: " $ CheckName);
 	
