@@ -20,6 +20,7 @@ static function X2DataTemplate CreateAPChosenHuntRewardTemplate()
 	`CREATE_X2Reward_TEMPLATE(Template, 'Reward_APChosenHunt');
 
 	Template.IsRewardAvailableFn = IsAPChosenHuntRewardAvailable;
+	Template.GiveRewardFn = GiveAPChosenHuntReward;
 	Template.GetRewardStringFn = GetAPChosenHuntRewardString;
 	Template.GetRewardPreviewStringFn = GetAPChosenHuntRewardPreviewString;
 
@@ -39,6 +40,30 @@ static function bool IsAPChosenHuntRewardAvailable(optional XComGameState NewGam
 	}
 
 	return false;
+}
+
+static function GiveAPChosenHuntReward(XComGameState NewGameState, XComGameState_Reward RewardState, optional StateObjectReference AuxRef, optional bool bOrder = false, optional int OrderHours = -1)
+{
+	local XComGameState_CovertAction	CovertActionState;
+	local int							Count;
+
+	CovertActionState = XComGameState_CovertAction(`XCOMHISTORY.GetGameStateForObjectID(AuxRef.ObjectID));
+
+	switch (CovertActionState.GetMyTemplateName())
+	{
+		case 'CovertAction_RevealChosenMovements':
+			Count = `APCTRINC('ChosenHuntPt1Checked', NewGameState);
+			`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt1:" $ Count));
+			break;
+		case 'CovertAction_RevealChosenStrengths':
+			Count = `APCTRINC('ChosenHuntPt2Checked', NewGameState);
+			`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt2:" $ Count));
+			break;
+		case 'CovertAction_RevealChosenStronghold':
+			Count = `APCTRINC('ChosenHuntPt3Checked', NewGameState);
+			`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt3:" $ Count));
+			break;
+	}
 }
 
 static function string GetAPChosenHuntRewardString(XComGameState_Reward RewardState)

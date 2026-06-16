@@ -37,7 +37,6 @@ private static function X2EventListenerTemplate CreateListenerTemplate()
     Template.RegisterInStrategy = true;
 
 	Template.AddEvent('UnitDied', OnUnitDied);
-	Template.AddEvent('CovertActionCompleted', OnCovertActionCompleted);
     Template.AddEvent('XComVictory', OnXComVictory);
 	Template.AddEvent('AfterActionWalkUp', OnWalkUp);
 	Template.AddEvent('PromotionEvent', OnPromotion);
@@ -168,28 +167,6 @@ private static function RefundSparkCost(XComGameState NewGameState, XComGameStat
 	SeqActShowDramaticMessage.Message2 = `APUNITINFO(default.strSparkCostRefundedDetails, UnitState);
 	SeqActShowDramaticMessage.MessageColor = eUIState_Normal;
 	SeqActShowDramaticMessage.BuildVisualization(NewGameState);
-}
-
-protected static function EventListenerReturn OnCovertActionCompleted(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
-{
-	local XComGameState_ResistanceFaction	FactionState;
-	local name								CheckedCounterName;
-	local int								ChosenHuntPart;
-	local int								ChosenHuntPartCount;
-
-	class'X2Item_APCounterResources'.static.GetRecentCompletedChosenHuntFaction(FactionState, CheckedCounterName, NewGameState);
-
-	// No chosen hunt covert action
-	if (FactionState == none) return ELR_NoInterrupt;
-
-	ChosenHuntPart = `APCTRINC(CheckedCounterName, NewGameState);
-
-	if (`APCTRREAD('ReaperChosenHuntChecked', NewGameState) >= ChosenHuntPart) ChosenHuntPartCount += 1;
-	if (`APCTRREAD('SkirmisherChosenHuntChecked', NewGameState) >= ChosenHuntPart) ChosenHuntPartCount += 1;
-	if (`APCTRREAD('TemplarChosenHuntChecked', NewGameState) >= ChosenHuntPart) ChosenHuntPartCount += 1;
-
-	`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt" $ ChosenHuntPart $ ":" $ ChosenHuntPartCount));
-	return ELR_NoInterrupt;
 }
 
 protected static function EventListenerReturn OnXComVictory(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
