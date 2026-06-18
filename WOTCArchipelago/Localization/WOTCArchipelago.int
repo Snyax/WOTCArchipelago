@@ -110,9 +110,9 @@ strClassNormal="Normal"
 
 +arrTrapHints="Shen says she has a bad feeling about this one..."
 +arrTrapHints="We should be careful with the research we conduct, commander. The aliens may have left behind some painful surprises for us."
-+arrTrapHints="Commander, it may just be my paranoia, but I'm beginning to question whether we might be playing into the aliens' hands."
++arrTrapHints="Commander, it may just be my paranoia, but I'm beginning to question whether we're not playing into the aliens' hands."
 +arrTrapHints="If there's one thing I learned during my time working for the aliens, it's that some things should better be left untouched."
-+arrTrapHints="Pursuing this research is what professionals might call a Terribly Regrettable Action Plan... or TRAP, for short."
++arrTrapHints="Some research may have adverse effects, commander. We should proceed with utmost caution."
 
 +arrNormalHints="This research may not be worth our time..."
 +arrNormalHints="We might benefit from focusing our attention elsewhere, commander."
