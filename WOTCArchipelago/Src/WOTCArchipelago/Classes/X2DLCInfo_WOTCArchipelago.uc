@@ -502,6 +502,7 @@ private static function PatchSoldierClassTemplates(X2DataTemplate DataTemplate)
 	if (class'WOTCArchipelago_Ranksanity'.static.IsEnabled(SoldierClassTemplate.DataName))
 	{
 		SoldierClassTemplate.bBlockRankingUp = true;
+		SoldierClassTemplate.bHasClassMovie = false;  // Fixes UI breakage
 		`AMLOG("Patched " $ SoldierClassTemplate.Name);
 	}
 }
