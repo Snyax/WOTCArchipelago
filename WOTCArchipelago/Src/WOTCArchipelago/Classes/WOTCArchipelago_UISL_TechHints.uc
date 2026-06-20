@@ -47,19 +47,23 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 		strItem = default.strItemPrefix $ "???";
 		strPlayer = default.strPlayerPrefix $ "???";
 
-		if (TechSpoiler.bProgression) {
+		if (TechSpoiler.bProgression)
+		{
 			strClass = default.strClassProgression;
 			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrProgressionHints);
 		}
-		else if (TechSpoiler.bUseful) {
+		else if (TechSpoiler.bUseful)
+		{
 			strClass = default.strClassUseful;
 			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrUsefulHints);
 		}
-		else if (TechSpoiler.bTrap) {
+		else if (TechSpoiler.bTrap)
+		{
 			strClass = default.strClassTrap;
 			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrTrapHints);
 		}
-		else {
+		else
+		{
 			strClass = default.strClassNormal;
 			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrNormalHints);
 		}
