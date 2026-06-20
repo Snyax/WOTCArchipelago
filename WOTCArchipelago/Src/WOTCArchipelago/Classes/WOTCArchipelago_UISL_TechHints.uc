@@ -34,9 +34,9 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 	local SpoilerEntry		TechSpoiler;
 	local XComGameState		NewGameState;
 
-	local string			strClass;
 	local string			strItem;
 	local string			strPlayer;
+	local string			strClass;
 	local string			strHint;
 
 	for (Idx = 0; Idx < Min(ResearchScreen.arrItems.Length, ResearchScreen.m_arrRefs.Length); Idx++)
@@ -47,18 +47,29 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 		strItem = default.strItemPrefix $ "???";
 		strPlayer = default.strPlayerPrefix $ "???";
 
+		if (TechSpoiler.bProgression) {
+			strClass = default.strClassProgression;
+			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrProgressionHints);
+		}
+		else if (TechSpoiler.bUseful) {
+			strClass = default.strClassUseful;
+			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrUsefulHints);
+		}
+		else if (TechSpoiler.bTrap) {
+			strClass = default.strClassTrap;
+			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrTrapHints);
+		}
+		else {
+			strClass = default.strClassNormal;
+			strHint = static.GetClassHint(string(TechSpoiler.Location) $ TechSpoiler.Item, default.arrNormalHints);
+		}
+
 		// Hint everything
 		if (`APCFG(HINT_TECH_LOC_FULL))
 		{
-			if (TechSpoiler.bProgression) strClass = default.strClassProgression;
-			else if (TechSpoiler.bUseful) strClass = default.strClassUseful;
-			else if (TechSpoiler.bTrap) strClass = default.strClassTrap;
-			else strClass = default.strClassNormal;
-
 			strItem = default.strItemPrefix $ TechSpoiler.Item $ " (" $ strClass $ ")";
 			strPlayer = default.strPlayerPrefix $ TechSpoiler.Player $ " (" $ TechSpoiler.Game $ ")";
-
-			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer;
+			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n\n" $ strHint;
 
 			// Create server hint
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Creating server hint");
@@ -68,17 +79,13 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 		// Hint classification
 		else if (`APCFG(HINT_TECH_LOC_PART))
 		{
-			if (TechSpoiler.bProgression) strHint = static.GetClassHint(TechSpoiler.Item, default.arrProgressionHints);
-			else if (TechSpoiler.bUseful) strHint = static.GetClassHint(TechSpoiler.Item, default.arrUsefulHints);
-			else if (TechSpoiler.bTrap) strHint = static.GetClassHint(TechSpoiler.Item, default.arrTrapHints);
-			else strHint = static.GetClassHint(TechSpoiler.Item, default.arrNormalHints);
-
-			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n" $ strHint;
+			strItem = default.strItemPrefix $ "??? (" $ strClass $ ")";
+			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n\n" $ strHint;
 		}
 		// Hint nothing
 		else
 		{
-			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n" $ default.strNoHint;
+			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n\n" $ default.strNoHint;
 		}
 	}
 
@@ -86,15 +93,15 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 }
 
 // Get arbitrary but deterministic hint
-private static function string GetClassHint(string strItem, array<string> arrClassHints)
+private static function string GetClassHint(string strSeed, array<string> arrClassHints)
 {
 	local int		Idx;
 	local int		Res;
 	local string	strChar;
 
-	for (Idx = 0; Idx < Len(strItem); Idx++)
+	for (Idx = 0; Idx < Len(strSeed); Idx++)
 	{
-		strChar = Mid(strItem, Idx, 1);
+		strChar = Mid(strSeed, Idx, 1);
 
 		if (strChar == "a" || strChar == "A") Res += 1;
 		if (strChar == "b" || strChar == "B") Res += 2;
