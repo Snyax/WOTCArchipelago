@@ -56,6 +56,10 @@ static event OnPostTemplatesCreated()
 	`AMLOG("Patching Proving Ground Project Templates");
 	IterateTemplatesAllDiff(class'X2TechTemplate', PatchProvingGroundTemplates);
 
+	// Patch character templates to fix issues as a result of sequence breaking
+	`AMLOG("Patching Character Templates");
+	IterateTemplatesAllDiff(class'X2CharacterTemplate', PatchCharacterTemplates);
+
 	// SKIPS
 
 	// Patch mission source templates to disable some optional mission types
@@ -396,6 +400,30 @@ private static function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
 		TechTemplate.Requirements.RequiredEngineeringScore = 0;
 
 	if (bPatched) `AMLOG("Patched " $ TechTemplate.Name);
+}
+
+// Patch character templates to fix issues as a result of sequence breaking
+private static function PatchCharacterTemplates(X2DataTemplate DataTemplate)
+{
+	local X2CharacterTemplate CharacterTemplate;
+
+	CharacterTemplate = X2CharacterTemplate(DataTemplate);
+
+	// Fix Avatars spawning damaged in final mission if objective to kill the first Avatar is active
+	if (CharacterTemplate.DataName == 'AdvPsiWitchM3')
+	{
+		CharacterTemplate.OnStatAssignmentCompleteFn = OnPsiWitchStatAssignmentCompleteOverride;
+		`AMLOG("Patched " $ CharacterTemplate.Name);
+	}
+}
+
+private static function OnPsiWitchStatAssignmentCompleteOverride(XComGameState_Unit UnitState)
+{
+	// Deplete Avatar health iff broadcast mission objective is not yet completed (-> we're not in the final mission)
+	if (class'XComGameState_HeadquartersXCom'.static.GetObjectiveStatus('T5_M2_CompleteBroadcastTheTruthMission') != eObjectiveState_Completed)
+	{
+		UnitState.SetCurrentStat(eStat_HP, UnitState.GetMaxStat(eStat_HP) * class'X2TacticalGameRuleset'.default.DepletedAvatarHealthMod);
+	}
 }
 
 // Patch mission source templates to disable some optional mission types
