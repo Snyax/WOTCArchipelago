@@ -2,14 +2,12 @@ class WOTCArchipelago_APClient extends Actor
 		config(WOTCArchipelago)
 		dependson(WOTCArchipelago_TcpLink);
 
-var bool bShowCustomPopup;
-var string CustomPopupTitle;
-var string CustomPopupText;
-
 var private int SinceLastTick;
 var private WOTCArchipelago_TcpLink TickLink;
 
 var private int NumStrategyObjectives;
+
+var private array<name> CheckBuffer;
 
 var private string TechCompletedType;
 var private string PromotionType;
@@ -18,7 +16,9 @@ var private string ResourceType;
 var private string StaffType;
 var private string TrapType;
 
-var private array<name> CheckBuffer;
+var private bool bShowCustomPopup;
+var private string CustomPopupTitle;
+var private string CustomPopupText;
 
 var config bool bRequirePsiGate;
 var config bool bRequireStasisSuit;
@@ -65,14 +65,12 @@ private function Initialize()
 {
 	`AMLOG("Initializing APClient");
 
-	bShowCustomPopup = false;
-	CustomPopupTitle = "";
-	CustomPopupText = "";
-
 	SinceLastTick = 0;
 	TickLink = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
 
 	NumStrategyObjectives = 0;
+
+	CheckBuffer = class'XComGameState_APStore'.static.ReadCheckBuffer();
 
 	TechCompletedType = "[TechCompleted]";
 	PromotionType = "[Promotion]";
@@ -80,6 +78,10 @@ private function Initialize()
 	ResourceType = "[Resource]";
 	StaffType = "[Staff]";
 	TrapType = "[Trap]";
+
+	bShowCustomPopup = false;
+	CustomPopupTitle = "";
+	CustomPopupText = "";
 }
 
 
@@ -126,15 +128,18 @@ private function CheckErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Re
 {
 	`AMLOG("Check Error Status: " $ Resp.ResponseCode);
 
-	// Client can not be reached
-	if (Resp.ResponseCode == 408)
+	if (!class'WOTCArchipelago_UISL_ShellSplash'.default.bAllowInvalidLaunch)
 	{
-		RaiseDialog(default.strRequestTimedOut, default.strRequestTimedOutDetails);
-	}
-	// Client is not connected to server
-	else if (Resp.ResponseCode == 503)
-	{
-		RaiseDialog(default.strClientDisconnected, default.strClientDisconnectedDetails);
+		// Client can not be reached
+		if (Resp.ResponseCode == 408)
+		{
+			RaiseDialog(default.strRequestTimedOut, default.strRequestTimedOutDetails);
+		}
+		// Client is not connected to server
+		else if (Resp.ResponseCode == 503)
+		{
+			RaiseDialog(default.strClientDisconnected, default.strClientDisconnectedDetails);
+		}
 	}
 
 	AppendCheckBuffer(Link.GetCheckName());
@@ -143,15 +148,39 @@ private function CheckErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Re
 
 private function AppendCheckBuffer(name CheckName)
 {
-	if (CheckBuffer.Find(CheckName) == INDEX_NONE) CheckBuffer.AddItem(CheckName);
+	local XComGameState NewGameState;
+
+	if (CheckBuffer.Find(CheckName) == INDEX_NONE)
+	{
+		CheckBuffer.AddItem(CheckName);
+
+		// Update APStore CheckBuffer
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Update APStore CheckBuffer");
+		class'XComGameState_APStore'.static.WriteCheckBuffer(NewGameState, CheckBuffer);
+		`GAMERULES.SubmitGameState(NewGameState);
+	}
 }
 
 private function ClearCheckBuffer()
 {
+	local XComGameState		NewGameState;
+	local bool				bModified;
+
+	bModified = CheckBuffer.Length > 0;
+
 	while (CheckBuffer.Length > 0)
 	{
 		OnCheckReached(CheckBuffer[0]);
 		CheckBuffer.Remove(0, 1);
+
+	}
+
+	if (bModified)
+	{
+		// Update APStore CheckBuffer
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Update APStore CheckBuffer");
+		class'XComGameState_APStore'.static.WriteCheckBuffer(NewGameState, CheckBuffer);
+		`GAMERULES.SubmitGameState(NewGameState);
 	}
 }
 
@@ -465,15 +494,18 @@ private function TickErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Res
 {
 	`AMLOG("Tick Error Status: " $ Resp.ResponseCode);
 
-	// Client can not be reached
-	if (Resp.ResponseCode == 408)
+	if (!class'WOTCArchipelago_UISL_ShellSplash'.default.bAllowInvalidLaunch)
 	{
-	    RaiseDialog(default.strRequestTimedOut, default.strRequestTimedOutDetails);
-	}
-	// Client is not connected to server
-	else if (Resp.ResponseCode == 503)
-	{
-	    RaiseDialog(default.strClientDisconnected, default.strClientDisconnectedDetails);
+		// Client can not be reached
+		if (Resp.ResponseCode == 408)
+		{
+			RaiseDialog(default.strRequestTimedOut, default.strRequestTimedOutDetails);
+		}
+		// Client is not connected to server
+		else if (Resp.ResponseCode == 503)
+		{
+			RaiseDialog(default.strClientDisconnected, default.strClientDisconnectedDetails);
+		}
 	}
 
 	Link.Destroy();
@@ -647,6 +679,13 @@ private static function TriggerTrap(XComGameState NewGameState, name TrapName, o
 //=======================================================================================
 //                                      DIALOG
 //---------------------------------------------------------------------------------------
+
+function RegisterCustomPopup(string Title, string Text)
+{
+	CustomPopupTitle = Title;
+	CustomPopupText = Text;
+	bShowCustomPopup = true;
+}
 
 // `HQPRES.UIRaiseDialog internally creates a new GameState to pause time in the geoscape,
 // the APClient offers the ability to display custom popups (in DoChores) to circumvent this

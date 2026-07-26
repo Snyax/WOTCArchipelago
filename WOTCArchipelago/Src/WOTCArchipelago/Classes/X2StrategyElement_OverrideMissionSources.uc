@@ -24,7 +24,6 @@ static function SpawnSupplyRaidMission_Override(XComGameState NewGameState, int 
 	local int iReward;
 	local XComGameState_MissionCalendar CalendarState;
 	local XComGameState_HeadquartersResistance ResHQ;
-	local WOTCArchipelago_APClient APClient;
 
 	CalendarState = GetMissionCalendar(NewGameState);
 
@@ -67,10 +66,7 @@ static function SpawnSupplyRaidMission_Override(XComGameState NewGameState, int 
 		`AMLOG("Skipped Supply Raid Mission");
 
 		// Show custom skip mission popup
-		APClient = `APCLIENT;
-		APClient.CustomPopupTitle = default.strSkippedSupplyRaid;
-		APClient.CustomPopupText = default.strSkippedRewardCollection;
-		APClient.bShowCustomPopup = true;
+		`APCLIENT.RegisterCustomPopup(default.strSkippedSupplyRaid, default.strSkippedRewardCollection);
 	}
 	else
 	{
@@ -100,7 +96,6 @@ static function SpawnCouncilMission_Override(XComGameState NewGameState, int Mis
 	local float MissionDuration;
 	local XComGameState_MissionCalendar CalendarState;
 	local XComGameState_HeadquartersResistance ResHQ;
-	local WOTCArchipelago_APClient APClient;
 
 	CalendarState = GetMissionCalendar(NewGameState);
 
@@ -145,10 +140,7 @@ static function SpawnCouncilMission_Override(XComGameState NewGameState, int Mis
 		`AMLOG("Skipped Council Mission");
 
 		// Show custom skip mission popup
-		APClient = `APCLIENT;
-		APClient.CustomPopupTitle = default.strSkippedCouncilMission;
-		APClient.CustomPopupText = default.strSkippedRewardCollection;
-		APClient.bShowCustomPopup = true;
+		`APCLIENT.RegisterCustomPopup(default.strSkippedCouncilMission, default.strSkippedRewardCollection);
 	}
 	else
 	{
@@ -164,7 +156,6 @@ static function SpawnResOpMission_Override(XComGameState NewGameState, int Missi
 	local XComGameState_ResistanceFaction FactionState;
 	local X2MissionSourceTemplate MissionSource;
 	local XComGameState_MissionCalendar CalendarState;
-	local WOTCArchipelago_APClient APClient;
 
 	CalendarState = GetMissionCalendar(NewGameState);
 
@@ -192,10 +183,7 @@ static function SpawnResOpMission_Override(XComGameState NewGameState, int Missi
 		`AMLOG("Skipped Resistance Op Mission");
 
 		// Show custom skip mission popup
-		APClient = `APCLIENT;
-		APClient.CustomPopupTitle = default.strSkippedResistanceOp;
-		APClient.CustomPopupText = default.strSkippedRewardCollection;
-		APClient.bShowCustomPopup = true;
+		`APCLIENT.RegisterCustomPopup(default.strSkippedResistanceOp, default.strSkippedRewardCollection);
 	}
 	else
 	{
