@@ -50,20 +50,20 @@ simulated function ApplyEffectToWorld(const out EffectAppliedData ApplyEffectPar
 	if (SourceUnit.GetTeam() != eTeam_XCom) return;
 
 	// Regular item check
-	CheckItem(NewGameState, SourceWeapon.GetMyTemplateName());
+	CheckItem(SourceWeapon.GetMyTemplateName());
 
 	// Weapon ammo check
-	CheckItem(NewGameState, SourceWeaponAmmo.GetMyTemplateName());
+	CheckItem(SourceWeaponAmmo.GetMyTemplateName());
 
 	// If weapon is a grenade launcher, check ammo (= grenade) as well
 	if (ClassIsChildOf(SourceWeapon.GetMyTemplate().Class, class'X2GrenadeLauncherTemplate'))
-		CheckItem(NewGameState, SourceAmmo.GetMyTemplateName());
+		CheckItem(SourceAmmo.GetMyTemplateName());
 
 	// Check ability in case of inventory exception
-	CheckAbility(NewGameState, SourceAbility.GetMyTemplateName(), SourceUnit);
+	CheckAbility(SourceAbility.GetMyTemplateName(), SourceUnit);
 }
 
-private static function CheckAbility(XComGameState NewGameState, name AbilityTemplateName, XComGameState_Unit UnitState)
+private static function CheckAbility(name AbilityTemplateName, XComGameState_Unit UnitState)
 {
 	local CheckInventory			InInventory;
 	local StateObjectReference		ItemRef;
@@ -77,30 +77,29 @@ private static function CheckAbility(XComGameState NewGameState, name AbilityTem
 			// Search unit inventory for specified items
 			foreach UnitState.InventoryItems(ItemRef)
 			{
-				ItemState = XComGameState_Item(NewGameState.GetGameStateForObjectID(ItemRef.ObjectID));
-				if (ItemState == none)
-					ItemState = XComGameState_Item(`XCOMHISTORY.GetGameStateForObjectID(ItemRef.ObjectID));
+				ItemState = XComGameState_Item(`XCOMHISTORY.GetGameStateForObjectID(ItemRef.ObjectID));
+				if (ItemState == none) continue;
 
 				ItemTemplateName = ItemState.GetMyTemplateName();
 				if (InInventory.Members.Find(ItemTemplateName) != INDEX_NONE)
-					CheckItem(NewGameState, ItemTemplateName);
+					CheckItem(ItemTemplateName);
 			}
 		}
 	}
 }
 
-private static function CheckItem(XComGameState NewGameState, name ItemTemplateName)
+private static function CheckItem(name ItemTemplateName)
 {
 	local ItemCategory Category;
 
 	// Check Items
 	if (default.CheckUseItems.Find(ItemTemplateName) != INDEX_NONE)
-		`APCLIENT.OnCheckReached(NewGameState, name("Use" $ ItemTemplateName));
+		`APCLIENT.OnCheckReached(name("Use" $ ItemTemplateName));
 
 	// Check Item Categories
 	foreach default.CheckUseItemCategories(Category)
 	{
 		if (Category.Members.Find(ItemTemplateName) != INDEX_NONE)
-			`APCLIENT.OnCheckReached(NewGameState, name("Use" $ Category.CategoryName));
+			`APCLIENT.OnCheckReached(name("Use" $ Category.CategoryName));
 	}
 }

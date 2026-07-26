@@ -59,8 +59,11 @@ static function SpawnSupplyRaidMission_Override(XComGameState NewGameState, int 
 	if (`APCFG(SKIP_SUPPLY_RAIDS))
 	{
 		// Skip mission
-		GiveSupplyRaidSkipRewards();
 		SkipMission(NewGameState, MissionState);
+		`APADDITEM(NewGameState, 'Supplies', GetRandomAmount(default.SupplyRaidSkipMaxSupplies));
+		`APADDITEM(NewGameState, 'AlienAlloy', GetRandomAmount(default.SupplyRaidSkipMaxAlloys));
+		`APADDITEM(NewGameState, 'EleriumDust', GetRandomAmount(default.SupplyRaidSkipMaxElerium));
+		`APADDITEM(NewGameState, 'EleriumCore', GetRandomAmount(default.SupplyRaidSkipMaxCores));
 		`AMLOG("Skipped Supply Raid Mission");
 
 		// Show custom skip mission popup
@@ -74,6 +77,14 @@ static function SpawnSupplyRaidMission_Override(XComGameState NewGameState, int 
 		// Set Popup flag
 		CalendarState.MissionPopupSources.AddItem(MissionState.Source);
 	}
+}
+
+private static function int GetRandomAmount(int MaxAmount)
+{
+	local float Mult;
+
+	Mult = `APCFG(SKIP_RAID_REWARD_MULT_BASE) + `APCFG(SKIP_RAID_REWARD_MULT_ERR) * (2.0 * `SYNC_FRAND_STATIC() - 1.0);
+	return Clamp(MaxAmount * Mult, 0, MaxAmount);
 }
 
 static function SpawnCouncilMission_Override(XComGameState NewGameState, int MissionMonthIndex)
@@ -298,6 +309,7 @@ private static function SkipMission(XComGameState NewGameState, XComGameState_Mi
 	MissionState.GetMissionSource().OnSuccessFn(NewGameState, MissionState);
 }
 
+// Parent function is private, this is an exact copy
 private static function XComGameState_MissionSite BuildResOpMission(XComGameState NewGameState, X2MissionSourceTemplate MissionSource, optional bool bNoPOI)
 {
 	local X2StrategyElementTemplateManager StratMgr;
@@ -372,6 +384,7 @@ private static function XComGameState_MissionSite BuildResOpMission(XComGameStat
 	return MissionState;
 }
 
+// Parent function is private, this is an exact copy
 private static function AddTacticalTagToRewardUnit(XComGameState NewGameState, XComGameState_Reward RewardState, name TacticalTag)
 {
 	local XComGameState_Unit UnitState;
@@ -381,31 +394,4 @@ private static function AddTacticalTagToRewardUnit(XComGameState NewGameState, X
 	{
 		UnitState.TacticalTag = TacticalTag;
 	}
-}
-
-private static function GiveSupplyRaidSkipRewards()
-{
-	local WOTCArchipelago_APClient APClient;
-
-	APClient = `APCLIENT;
-
-	APClient.AddItemNames.AddItem('Supplies');
-	APClient.AddItemQuantities.AddItem(GetRandomAmount(default.SupplyRaidSkipMaxSupplies));
-
-	APClient.AddItemNames.AddItem('AlienAlloy');
-	APClient.AddItemQuantities.AddItem(GetRandomAmount(default.SupplyRaidSkipMaxAlloys));
-
-	APClient.AddItemNames.AddItem('EleriumDust');
-	APClient.AddItemQuantities.AddItem(GetRandomAmount(default.SupplyRaidSkipMaxElerium));
-
-	APClient.AddItemNames.AddItem('EleriumCore');
-	APClient.AddItemQuantities.AddItem(GetRandomAmount(default.SupplyRaidSkipMaxCores));
-}
-
-private static function int GetRandomAmount(int MaxAmount)
-{
-	local float Mult;
-
-	Mult = `APCFG(SKIP_RAID_REWARD_MULT_BASE) + `APCFG(SKIP_RAID_REWARD_MULT_ERR) * (2.0 * `SYNC_FRAND_STATIC() - 1.0);
-	return Clamp(MaxAmount * Mult, 0, MaxAmount);
 }

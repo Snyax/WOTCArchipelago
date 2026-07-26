@@ -160,7 +160,7 @@ static function HandleResearchCompletion(XComGameState NewGameState, XComGameSta
 
 	`AMLOG("Research Completed: " $ TechTemplateName);
 
-	`APCLIENT.OnCheckReached(NewGameState, TechTemplateName);
+	`APCLIENT.OnCheckReached(TechTemplateName);
 
 	// Trigger pop-ups for Shadow Chamber projects
 	if (TechTemplate.bShadowProject)

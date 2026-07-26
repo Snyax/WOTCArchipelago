@@ -53,15 +53,15 @@ static function GiveAPChosenHuntReward(XComGameState NewGameState, XComGameState
 	{
 		case 'CovertAction_RevealChosenMovements':
 			Count = `APCTRINC('ChosenHuntPt1Checked', NewGameState);
-			`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt1:" $ Count));
+			`APCLIENT.OnCheckReached(name("ChosenHuntPt1:" $ Count));
 			break;
 		case 'CovertAction_RevealChosenStrengths':
 			Count = `APCTRINC('ChosenHuntPt2Checked', NewGameState);
-			`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt2:" $ Count));
+			`APCLIENT.OnCheckReached(name("ChosenHuntPt2:" $ Count));
 			break;
 		case 'CovertAction_RevealChosenStronghold':
 			Count = `APCTRINC('ChosenHuntPt3Checked', NewGameState);
-			`APCLIENT.OnCheckReached(NewGameState, name("ChosenHuntPt3:" $ Count));
+			`APCLIENT.OnCheckReached(name("ChosenHuntPt3:" $ Count));
 			break;
 	}
 }

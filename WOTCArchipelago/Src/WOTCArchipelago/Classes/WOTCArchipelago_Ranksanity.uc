@@ -85,7 +85,7 @@ static function SendMissingChecksByClass(XComGameState NewGameState, name Soldie
 	for (Idx = `APCTRREAD(RankSentCounterName, NewGameState); Idx < Ranks.Length; Idx++)
 	{
 		if (Ranks[Idx] > Rank) break;
-		`APCLIENT.OnCheckReached(NewGameState, name(SoldierClass $ "Rank" $ Ranks[Idx]));
+		`APCLIENT.OnCheckReached(name(SoldierClass $ "Rank" $ Ranks[Idx]));
 		`APCTRINC(RankSentCounterName, NewGameState);
 	}
 }
@@ -123,14 +123,15 @@ static function GrantMissingPromotions(XComGameState NewGameState, StateObjectRe
 	local name					SoldierClass;
 	local int					ReceivedRank;
 
-	SoldierState = XComGameState_Unit(NewGameState.GetGameStateForObjectID(SoldierRef.ObjectID));
-	if (SoldierState == none) SoldierState = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', SoldierRef.ObjectID));
+	SoldierState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(SoldierRef.ObjectID));
 
 	// Get received rank for soldier class
 	SoldierClass = SoldierState.GetSoldierClassTemplateName();
 	ReceivedRank = GetReceivedRank(SoldierClass, NewGameState);
+	if (SoldierState.GetRank() >= ReceivedRank) return;
 
 	// Promote up to received rank (if soldier rank was lower)
+	SoldierState = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', SoldierRef.ObjectID));
 	while (SoldierState.GetRank() < ReceivedRank)
 	{
 		SoldierState.RankUpSoldier(NewGameState);

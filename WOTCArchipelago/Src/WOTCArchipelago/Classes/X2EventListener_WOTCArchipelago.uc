@@ -51,7 +51,7 @@ protected static function EventListenerReturn OnUnitDied(Object EventData, Objec
 	UnitState = XComGameState_Unit(EventData);
 	if (UnitState == none) return ELR_NoInterrupt;
 
-	SendUnitKillCheck(NewGameState, UnitState);
+	SendUnitKillCheck(UnitState);
 
 	if (UnitState.GetTeam() == eTeam_Alien || UnitState.GetTeam() == eTeam_TheLost)
 		OnEnemyDied(NewGameState, UnitState);
@@ -67,7 +67,7 @@ private static function OnEnemyDied(XComGameState NewGameState, XComGameState_Un
 	GiveExtraCorpses(NewGameState, EnemyState);
 }
 
-private static function SendUnitKillCheck(XComGameState NewGameState, XComGameState_Unit UnitState)
+private static function SendUnitKillCheck(XComGameState_Unit UnitState)
 {
 	local name				CharacterTemplateName;
 	local name				CharacterGroupName;
@@ -82,7 +82,7 @@ private static function SendUnitKillCheck(XComGameState NewGameState, XComGameSt
 	{
 		if (Group.Members.Find(CharacterTemplateName) != INDEX_NONE)
 		{
-			`APCLIENT.OnCheckReached(NewGameState, name("Kill" $ Group.GroupName));
+			`APCLIENT.OnCheckReached(name("Kill" $ Group.GroupName));
 			bCustomGroupChecked = true;
 		}
 	}
@@ -92,7 +92,7 @@ private static function SendUnitKillCheck(XComGameState NewGameState, XComGameSt
 
 	// Check Default Character Groups
 	if (default.CheckKillDefaultCharacterGroups.Find(CharacterGroupName) != INDEX_NONE)
-		`APCLIENT.OnCheckReached(NewGameState, name("Kill" $ CharacterGroupName));
+		`APCLIENT.OnCheckReached(name("Kill" $ CharacterGroupName));
 }
 
 private static function DistributeExtraXP(XComGameState NewGameState, XComGameState_Unit EnemyState)
@@ -171,7 +171,7 @@ private static function RefundSparkCost(XComGameState NewGameState, XComGameStat
 
 protected static function EventListenerReturn OnXComVictory(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
 {
-	`APCLIENT.OnCheckReached(NewGameState, 'Victory');
+	`APCLIENT.OnCheckReached('Victory');
 	return ELR_NoInterrupt;
 }
 
@@ -184,14 +184,14 @@ protected static function EventListenerReturn OnWalkUp(Object EventData, Object 
 	// Check for broadcast goal
 	MissionState = XComGameState_MissionSite(`XCOMHISTORY.GetGameStateForObjectID(`XCOMHQ.MissionRef.ObjectID));
 	if (MissionState.GetMissionSource().DataName == 'MissionSource_Broadcast')
-		`APCLIENT.OnCheckReached(NewGameState, 'Broadcast');
+		`APCLIENT.OnCheckReached('Broadcast');
 
 	// Check for stronghold goal
 	BattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (BattleData.bChosenDefeated)
 	{
 		NumChosenDefeated = `APCTRINC('ChosenDefeated', NewGameState);
-		`APCLIENT.OnCheckReached(NewGameState, name("Stronghold" $ NumChosenDefeated));
+		`APCLIENT.OnCheckReached(name("Stronghold" $ NumChosenDefeated));
 	}
 
 	// Check for promotions

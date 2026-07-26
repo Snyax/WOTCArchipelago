@@ -2,15 +2,14 @@ class WOTCArchipelago_APClient extends Actor
 		config(WOTCArchipelago)
 		dependson(WOTCArchipelago_TcpLink);
 
-var array<name> AddItemNames;
-var array<int> AddItemQuantities;
-
 var bool bShowCustomPopup;
 var string CustomPopupTitle;
 var string CustomPopupText;
 
 var private int SinceLastTick;
 var private WOTCArchipelago_TcpLink TickLink;
+
+var private int NumStrategyObjectives;
 
 var private string TechCompletedType;
 var private string PromotionType;
@@ -71,7 +70,9 @@ private function Initialize()
 	CustomPopupText = "";
 
 	SinceLastTick = 0;
-	TickLink = Spawn(class'WOTCArchipelago_TcpLink');
+	TickLink = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
+
+	NumStrategyObjectives = 0;
 
 	TechCompletedType = "[TechCompleted]";
 	PromotionType = "[Promotion]";
@@ -93,13 +94,13 @@ private function Initialize()
 // Item Uses:							'Use' + ItemTemplate.DataName
 // Chosen Hunt Covert Actions:			'ChosenHuntPt' + [1/2/3] + ':' + [1/2/3]
 // Soldier Class Ranks:					SoldierClassTemplate.DataName + 'Rank' + [MinRank..MaxRank]
-function OnCheckReached(XComGameState NewGameState, name CheckName)
+function OnCheckReached(name CheckName)
 {
 	local WOTCArchipelago_TcpLink Link;
 	
 	`AMLOG("Check reached: " $ CheckName);
 	
-	Link = Spawn(class'WOTCArchipelago_TcpLink');
+	Link = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
 	Link.Call("/Check/" $ CheckName, CheckResponseHandler, CheckErrorHandler);
 }
 
@@ -147,17 +148,9 @@ private function AppendCheckBuffer(name CheckName)
 
 private function ClearCheckBuffer()
 {
-	local XComGameState		NewGameState;
-	local name				CheckName;
-
 	while (CheckBuffer.Length > 0)
 	{
-		CheckName = CheckBuffer[0];
-
-		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Re-send check " $ CheckName $ " from buffer");
-		OnCheckReached(NewGameState, CheckName);
-		`GAMERULES.SubmitGameState(NewGameState);
-
+		OnCheckReached(CheckBuffer[0]);
 		CheckBuffer.Remove(0, 1);
 	}
 }
@@ -173,7 +166,7 @@ function CreateServerHint(XComGameState NewGameState, name CheckName)
 	
 	`AMLOG("Hint created: " $ CheckName);
 	
-	Link = Spawn(class'WOTCArchipelago_TcpLink');
+	Link = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
 	Link.Call("/Hint/" $ CheckName, HintResponseHandler, HintErrorHandler);
 }
 
@@ -206,44 +199,27 @@ function Update()
 
 function DoChores()
 {
-	// Handle add item
-	if (AddItemNames.Length > 0) HandleAddItem();
+	local array<StateObjectReference> CurrentStrategyObjectives;
 
-	// Handle custom popup
+	// Handle custom popup (RaiseDialog internally creates a new GameState,
+	// so this is useful in case a pending GameState already exists when the popup is created)
 	if (bShowCustomPopup)
 	{
 		RaiseDialog(CustomPopupTitle, CustomPopupText);
 		bShowCustomPopup = false;
 	}
 
-	HandleObjectiveCompletion();
+	// Only check strategy objectives for completion if they were updated since last time
+	CurrentStrategyObjectives = class'XComGameState_HeadquartersXCom'.static.GetCompletedAndActiveStrategyObjectives();
+	if (NumStrategyObjectives != CurrentStrategyObjectives.Length)
+	{
+		HandleObjectiveCompletion();
+		NumStrategyObjectives = CurrentStrategyObjectives.Length;
+	}
+
 	HandleStrongholdUnlock();
 	HandleReplaceFactionHero();
 	HandleRanksanityPromotions();
-}
-
-private function HandleAddItem()
-{
-	local XComGameState		NewGameState;
-	local int				Idx;
-
-	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Adding items to HQ inventory");
-
-	for (Idx = 0; Idx < AddItemNames.Length; Idx++)
-	{
-		if (AddItemQuantities.Length <= Idx)
-		{
-			`AMLOG("Too few quantities given for add item");
-			AddItemQuantities.AddItem(1);
-		}
-
-		`APADDITEM(NewGameState, AddItemNames[Idx], AddItemQuantities[Idx]);
-	}
-	
-	`GAMERULES.SubmitGameState(NewGameState);
-
-	AddItemNames.Length = 0;
-	AddItemQuantities.Length = 0;
 }
 
 private static function HandleObjectiveCompletion()
@@ -258,11 +234,9 @@ private static function HandleObjectiveCompletion()
 	if (!default.bRequireStasisSuit || XComHQ.IsObjectiveCompleted('T2_M4_BuildStasisSuit')) `APCTRINC('StasisSuitObjectiveCompleted');
 	if (!default.bRequireAvatarCorpse || XComHQ.IsObjectiveCompleted('T1_M6_S0_RecoverAvatarCorpse')) `APCTRINC('AvatarCorpseObjectiveCompleted');
 
-	// HACK: Periodically trigger events to fix sequence broken objectives
-	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("HACK: Trigger events for sequence breaks");
+	// HACK: Trigger ResearchCompleted event to complete sequence broken objectives (including final Avatar Autopsy objective)
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("HACK: Trigger ResearchCompleted event for sequence breaks");
 	`XEVENTMGR.TriggerEvent('ResearchCompleted', , , NewGameState);
-	`XEVENTMGR.TriggerEvent('FacilityConstructionCompleted', , , NewGameState); // Proving Grounds, Shadow Chamber
-	`XEVENTMGR.TriggerEvent('ItemConstructionCompleted', , , NewGameState); // Skulljack
 	`GAMERULES.SubmitGameState(NewGameState);
 
 	// Remove story objective completed counters from HQ inventory
@@ -358,11 +332,14 @@ private static function HandleReplaceFactionHero()
 
 static function HandleRanksanityPromotions(optional XComGameState NewGameState)
 {
+	local XComGameStateHistory	History;
 	local StateObjectReference	UnitRef;
 	local XComGameState_Unit	UnitState;
 	local bool					bLocalGameState;
 
 	if (!class'WOTCArchipelago_Ranksanity'.default.bEnableRanksanity) return;
+
+	History = `XCOMHISTORY;
 
 	bLocalGameState = false;
 	if (NewGameState == none)
@@ -374,7 +351,7 @@ static function HandleRanksanityPromotions(optional XComGameState NewGameState)
 	foreach `XCOMHQ.Crew(UnitRef)
 	{
 		// Filter non-soldier units and disabled soldier classes
-		UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
+		UnitState = XComGameState_Unit(History.GetGameStateForObjectID(UnitRef.ObjectID));
 		if (!UnitState.IsSoldier()) continue;
 		if (!class'WOTCArchipelago_Ranksanity'.static.IsEnabled(UnitState.GetSoldierClassTemplateName())) continue;
 		
@@ -385,7 +362,14 @@ static function HandleRanksanityPromotions(optional XComGameState NewGameState)
 		class'WOTCArchipelago_Ranksanity'.static.SendMissingChecks(NewGameState, UnitRef);
 	}
 
-	if (bLocalGameState) `GAMERULES.SubmitGameState(NewGameState);
+	if (bLocalGameState)
+	{
+		// Only submit NewGameState if something actually changed
+		if (NewGameState.GetNumGameStateObjects() > 0)
+			`GAMERULES.SubmitGameState(NewGameState);
+		else
+			History.CleanupPendingGameState(NewGameState);
+	}
 }
 
 
@@ -493,7 +477,7 @@ private function TickErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Res
 	}
 
 	Link.Destroy();
-	TickLink = Spawn(class'WOTCArchipelago_TcpLink');
+	TickLink = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
 }
 
 
@@ -518,8 +502,8 @@ private function HandleMessage(string Message)
 
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Adding TechCompleted item to HQ inventory");
 		`APADDITEM(NewGameState, ItemName);
-		`XEVENTMGR.TriggerEvent('ResearchCompleted', , , NewGameState); // Trigger ResearchCompleted event
 		`GAMERULES.SubmitGameState(NewGameState);
+		HandleObjectiveCompletion();  // Complete sequence broken objectives (and check for campaign completion requirements)
 	}
 	// Promotion
 	else if (Left(Lines[0], Len(PromotionType)) == PromotionType)
@@ -664,22 +648,24 @@ private static function TriggerTrap(XComGameState NewGameState, name TrapName, o
 //                                      DIALOG
 //---------------------------------------------------------------------------------------
 
+// `HQPRES.UIRaiseDialog internally creates a new GameState to pause time in the geoscape,
+// the APClient offers the ability to display custom popups (in DoChores) to circumvent this
 private static function RaiseDialog(string Title, string Text)
 {
 	local TDialogueBoxData				kDialogData;
 	local SeqAct_ShowDramaticMessage	SeqActShowDramaticMessage;
 	local XComGameState					NewGameState;
 
-	// "None" signifies to skip dialog box
+	// "None" signals to skip dialog box
 	if (Title == "None") return;
 	if (Text == "None") return;
 
 	if (`HQPRES != none)
 	{
-		kDialogData.eType		= eDialog_Normal;
-		kDialogData.strTitle	= Title;
-		kDialogData.strText		= Text;
-		kDialogData.strAccept	= default.strDialogAccept;
+		kDialogData.eType = eDialog_Normal;
+		kDialogData.strTitle = Title;
+		kDialogData.strText = Text;
+		kDialogData.strAccept = default.strDialogAccept;
 
 		`HQPRES.UIRaiseDialog(kDialogData);
 	}
