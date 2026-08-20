@@ -32,7 +32,6 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 	local int				Idx;
 	local X2TechTemplate	TechTemplate;
 	local SpoilerEntry		TechSpoiler;
-	local XComGameState		NewGameState;
 
 	local string			strItem;
 	local string			strPlayer;
@@ -76,9 +75,7 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n\n" $ strHint;
 
 			// Create server hint
-			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Creating server hint");
-			`APCLIENT.CreateServerHint(NewGameState, TechTemplate.DataName);
-			`GAMERULES.SubmitGameState(NewGameState);
+			`APCLIENT.CreateServerHint(TechTemplate.DataName);
 		}
 		// Hint classification
 		else if (`APCFG(HINT_TECH_LOC_PART))

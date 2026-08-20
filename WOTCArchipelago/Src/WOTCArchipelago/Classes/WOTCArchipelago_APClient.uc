@@ -189,7 +189,7 @@ private function ClearCheckBuffer()
 //                                       HINT
 //---------------------------------------------------------------------------------------
 
-function CreateServerHint(XComGameState NewGameState, name CheckName)
+function CreateServerHint(name CheckName)
 {
 	local WOTCArchipelago_TcpLink Link;
 	
