@@ -145,6 +145,12 @@
     <Content Include="Src\WOTCArchipelago\Classes\X2StrategyElement_OverrideRewards.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_DeathLink.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_TacticalMessage.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\WOTCArchipelago\Classes\XComGameState_APStore.uc">
       <SubType>Content</SubType>
     </Content>

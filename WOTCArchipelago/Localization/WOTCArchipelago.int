@@ -21,7 +21,7 @@ strIncompatibleWarningDetails="This mod version is incompatible with the client 
 
 strDoomTrapMessage="Archipelago Trap"
 strDialogAccept="OK"
-strDramaticMessageTitle="Archipelago"
+strTacticalMessageTitle="Archipelago"
 
 [WOTCArchipelago_MCMScreen]
 strMenuPageTitle="X2WOTC Archipelago"
@@ -58,6 +58,10 @@ EXTRA_CORPSES_LABEL="Increase Corpse Gain"
 EXTRA_CORPSES_DESC="Gain additional corpses for each enemy killed."
 
 strGroupDeathLink="DeathLink"
+DEATHLINK_LABEL="DeathLink"
+DEATHLINK_DESC="When one of XCOM's soldiers dies, send a DeathLink packet to the multiworld, and vice versa."
+DEATHLINK_CHANCE_LABEL="DeathLink Chance"
+DEATHLINK_CHANCE_DESC="Of course DeathLink is random. That's XCOM, baby!"
 INSTANT_ROOKIE_TRAINING_LABEL="Instant Rookie Training"
 INSTANT_ROOKIE_TRAINING_DESC="Training rookies in the GTS is instant."
 INSTANT_SPARK_BUILDING_LABEL="Instant SPARK Construction"
@@ -71,9 +75,39 @@ strGroupTraps="Traps"
 NO_STARTING_TRAPS_LABEL="Disable Day One Traps"
 NO_STARTING_TRAPS_DESC="Traps have no effect when received on the first day of a campaign."
 
+[XComGameStateContext_DeathLink]
+strDeathLinkReceived="DeathLink Received"
+strDeathLinkDodged="But {FullName} dodged it!"
+strDeathLinkParried="But {FullName} parried it!"
+
 [X2EventListener_WOTCArchipelago]
 strSparkCostRefunded="SPARK Cost Refunded"
-strSparkCostRefundedDetails="{FullName} was destroyed, cost refunded."
+strSparkCostRefundedDetails="{FullName} had its cost refunded."
+
+strDLCauseGeneric="{FullName} died"
+strDLCauseBleedout="{FullName} bled out"
+strDLCauseBleedoutWithMedikit="{FullName} should have given their medikit to someone else"
+strDLCauseBleedoutAfterDeathLink="{FullName} narrowly survived DeathLink but bled out anyway"
+strDLCauseFire="{FullName} burned to death"
+strDLCauseAcid="{FullName} died to acid burn"
+strDLCausePoison="{FullName} died to poison"
+strDLCauseFall="{FullName} had the floor pulled out from under their feet"
+strDLCauseExplosion="{FullName} was caught in an explosion"
+strDLCausePanic="{FullName} fell victim to a devastating panic attack"
+strDLCauseMindControl="{FullName} was killed by a mind-controlled ally"
+strDLCauseSuicide="{FullName} was the architect of their own demise"
+strDLCauseBetrayal="{FullName} experienced the ultimate betrayal"
+strDLCauseLost="{FullName} was overrun by the Lost"
+strDLCauseNatOne="{FullName} rolled a Nat 1 (less than 5% hit chance)"
+strDLCauseLuckyStreak="{FullName}'s luck finally ran out (5+ miss streak)"
+strDLCauseDeathExplosion="{FullName} misjudged an enemy's explosion radius"
+strDLCauseCritWithCover="{FullName} died to a critical hit behind cover"
+strDLCauseRookie="{FullName} did not come prepared for the job"
+strDLCauseAdvent="{FullName} was killed by ADVENT"
+strDLCauseChosenAssassin="{FullName} was assassinated by the Chosen"
+strDLCauseChosenHunter="{FullName} was hunted down by the Chosen"
+strDLCauseChosenWarlock="{FullName} was dominated by the Chosen"
+strDLCauseAlienName="{FullName} was killed by a(n) "
 
 [X2StrategyElement_OverrideMissionSources]
 strSkippedSupplyRaid="Skipped Supply Raid"

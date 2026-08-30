@@ -5,6 +5,10 @@ class WOTCArchipelago_APClient extends Actor
 var private int SinceLastTick;
 var private WOTCArchipelago_TcpLink TickLink;
 
+var private bool bBlockDeathLink;
+var private bool bDeathTickLoop;
+var private WOTCArchipelago_TcpLink DeathTickLink;
+
 var private int NumStrategyObjectives;
 
 var private array<name> CheckBuffer;
@@ -36,7 +40,7 @@ var localized string strIncompatibleWarningDetails;
 
 var localized string strDoomTrapMessage;
 var localized string strDialogAccept;
-var localized string strDramaticMessageTitle;
+var localized string strTacticalMessageTitle;
 
 
 //=======================================================================================
@@ -67,6 +71,10 @@ private function Initialize()
 
 	SinceLastTick = 0;
 	TickLink = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
+
+	bBlockDeathLink = false;
+	bDeathTickLoop = false;
+	DeathTickLink = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
 
 	NumStrategyObjectives = 0;
 
@@ -209,6 +217,122 @@ private function HintErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Res
 {
 	`AMLOG("Hint Error Status: " $ Resp.ResponseCode);
 	Link.Destroy();
+}
+
+
+//=======================================================================================
+//                                     DEATHLINK
+//---------------------------------------------------------------------------------------
+
+function SendDeath(string DeathText)
+{
+	local WOTCArchipelago_TcpLink Link;
+
+	if (!`APCFG(DEATHLINK) || bBlockDeathLink) return;
+	
+	`AMLOG("DeathLink triggered with cause: " $ DeathText);
+	
+	Link = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
+	Link.Call("/Death/" $ class'WOTCArchipelago_Utilities'.static.EscapeURL(DeathText), DeathResponseHandler, DeathErrorHandler);
+}
+
+private function DeathResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+{
+	Link.Destroy();
+}
+
+private function DeathErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+{
+	`AMLOG("Death Error Status: " $ Resp.ResponseCode);
+	Link.Destroy();
+}
+
+function StartDeathTickLoop()
+{
+	if (bDeathTickLoop) return;
+	bDeathTickLoop = true;
+	DeathTick();
+}
+
+private function DeathTick()
+{
+	if (!bDeathTickLoop) return;
+	DeathTickLink.Call("/DeathTick/" $ `APCFG(DEATHLINK), DeathTickResponseHandler, DeathTickErrorHandler);
+}
+
+private function DeathTickResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+{
+	local StateObjectReference				UnitRef;
+	local XComGameState_Unit				UnitState;
+	local array<StateObjectReference>		DeathLinkTargets;
+	local XComGameStateContext_DeathLink	DeathLinkContext;
+
+	if (`APCFG(DEATHLINK) && bDeathTickLoop)
+	{
+		// Execute DeathLink if cause exists
+		if (Resp.Body != "")
+		{
+			`AMLOG("DeathLink received");
+
+			// Compile all valid DeathLink targets
+			foreach `XCOMHQ.Squad(UnitRef)
+			{
+				if (UnitRef.ObjectID != 0)
+				{
+					UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
+					if (UnitState.IsAlive()) DeathLinkTargets.AddItem(UnitRef);
+				}
+			}
+
+			if (DeathLinkTargets.Length == 0)
+			{
+				`AMLOG("No valid DeathLink targets!");
+			}
+			else
+			{
+				UnitRef = DeathLinkTargets[`SYNC_RAND(DeathLinkTargets.Length)];
+				UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
+
+				// Temporarily disable DeathLink before potentially killing unit
+				bBlockDeathLink = true;
+
+				DeathLinkContext = XComGameStateContext_DeathLink(class'XComGameStateContext_DeathLink'.static.CreateXComGameStateContext());
+				DeathLinkContext.TargetUnit = UnitRef;
+				DeathLinkContext.Cause = Resp.Body;
+
+				// Roll DeathLink result
+				if (`SYNC_FRAND() < `APCFG(DEATHLINK_CHANCE))
+				{
+					if (UnitState.IsPsionic()) DeathLinkContext.Result = eDeathLinkResult_Parry;
+					else DeathLinkContext.Result = eDeathLinkResult_Hit;
+				}
+				else DeathLinkContext.Result = eDeathLinkResult_Miss;
+
+				`GAMERULES.SubmitGameStateContext(DeathLinkContext);
+
+				// Re-enable DeathLink
+				bBlockDeathLink = false;
+			}
+		}
+	}
+
+	DeathTick();
+}
+
+private function DeathTickErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
+{
+	if (class'WOTCArchipelago_UISL_ShellSplash'.default.bAllowInvalidLaunch) bDeathTickLoop = false;
+	else `AMLOG("DeathTick Error Status: " $ Resp.ResponseCode);
+
+	Link.Destroy();
+	DeathTickLink = `XCOMGAME.Spawn(class'WOTCArchipelago_TcpLink');
+	DeathTick();
+}
+
+function CancelDeathTickLoop()
+{
+	`AMLOG("Cancelling DeathTick loop");
+	bDeathTickLoop = false;
 }
 
 
@@ -492,10 +616,10 @@ private function TickTacticalResponseHandler(WOTCArchipelago_TcpLink Link, HttpR
 
 private function TickErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
-	`AMLOG("Tick Error Status: " $ Resp.ResponseCode);
-
 	if (!class'WOTCArchipelago_UISL_ShellSplash'.default.bAllowInvalidLaunch)
 	{
+		`AMLOG("Tick Error Status: " $ Resp.ResponseCode);
+
 		// Client can not be reached
 		if (Resp.ResponseCode == 408)
 		{
@@ -680,6 +804,8 @@ private static function TriggerTrap(XComGameState NewGameState, name TrapName, o
 //                                      DIALOG
 //---------------------------------------------------------------------------------------
 
+// `HQPRES.UIRaiseDialog internally creates a new GameState to pause time in the geoscape,
+// the APClient offers the ability to display custom popups (in DoChores) to circumvent this
 function RegisterCustomPopup(string Title, string Text)
 {
 	CustomPopupTitle = Title;
@@ -687,13 +813,10 @@ function RegisterCustomPopup(string Title, string Text)
 	bShowCustomPopup = true;
 }
 
-// `HQPRES.UIRaiseDialog internally creates a new GameState to pause time in the geoscape,
-// the APClient offers the ability to display custom popups (in DoChores) to circumvent this
 private static function RaiseDialog(string Title, string Text)
 {
-	local TDialogueBoxData				kDialogData;
-	local SeqAct_ShowDramaticMessage	SeqActShowDramaticMessage;
-	local XComGameState					NewGameState;
+	local TDialogueBoxData						kDialogData;
+	local XComGameStateContext_TacticalMessage	TacticalMessageContext;
 
 	// "None" signals to skip dialog box
 	if (Title == "None") return;
@@ -710,14 +833,11 @@ private static function RaiseDialog(string Title, string Text)
 	}
 	else
 	{
-		SeqActShowDramaticMessage = new class'SeqAct_ShowDramaticMessage';
-		SeqActShowDramaticMessage.Title = default.strDramaticMessageTitle;
-		SeqActShowDramaticMessage.Message1 = Title;
-		SeqActShowDramaticMessage.Message2 = Text;
-		SeqActShowDramaticMessage.MessageColor = eUIState_Normal;
-		
-		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("SeqAct: Archipelago Tactical Message");
-		SeqActShowDramaticMessage.BuildVisualization(NewGameState);
-		`GAMERULES.SubmitGameState(NewGameState);
+		TacticalMessageContext = XComGameStateContext_TacticalMessage(class'XComGameStateContext_TacticalMessage'.static.CreateXComGameStateContext());
+		TacticalMessageContext.Title = default.strTacticalMessageTitle;
+		TacticalMessageContext.Message1 = Title;
+		TacticalMessageContext.Message2 = Text;
+		TacticalMessageContext.MessageColor = eUIState_Normal;
+		`GAMERULES.SubmitGameStateContext(TacticalMessageContext);
 	}
 }

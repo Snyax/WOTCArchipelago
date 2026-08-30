@@ -46,6 +46,10 @@ var config string CFG_AP_GEN_ID;
 `MCM_API_SliderVars(EXTRA_XP_MULT, float);
 `MCM_API_SliderVars(EXTRA_CORPSES, int);
 
+// DeathLink
+`MCM_API_CheckboxVars(DEATHLINK);
+`MCM_API_SliderVars(DEATHLINK_CHANCE, float);
+
 // Improve access to soldiers
 `MCM_API_CheckboxVars(INSTANT_ROOKIE_TRAINING);
 `MCM_API_CheckboxVars(INSTANT_SPARK_BUILDING);
@@ -76,6 +80,9 @@ var config int CFG_VERSION;
 
 `MCM_API_SliderFns(EXTRA_XP_MULT, float);
 `MCM_API_SliderFns(EXTRA_CORPSES, int);
+
+`MCM_API_CheckboxFns(DEATHLINK);
+`MCM_API_SliderFns(DEATHLINK_CHANCE, float);
 
 `MCM_API_CheckboxFns(INSTANT_ROOKIE_TRAINING);
 `MCM_API_CheckboxFns(INSTANT_SPARK_BUILDING);
@@ -121,12 +128,14 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	`MCM_API_AddCheckbox(GroupDuration, SKIP_FACTION_MISSIONS);
 	`MCM_API_AddCheckbox(GroupDuration, DISABLE_AMBUSH_RISK);
 	`MCM_API_AddCheckbox(GroupDuration, DISABLE_CAPTURE_RISK);
-	`MCM_API_AddSlider(GroupDuration, SKIP_RAID_REWARD_MULT_BASE, 0.0f, 1.0f, 0.05f);
-	`MCM_API_AddSlider(GroupDuration, SKIP_RAID_REWARD_MULT_ERR, 0.0f, 1.0f, 0.05f);
+	`MCM_API_AddSlider(GroupDuration, SKIP_RAID_REWARD_MULT_BASE, 0.0f, 1.0f, 0.01f);
+	`MCM_API_AddSlider(GroupDuration, SKIP_RAID_REWARD_MULT_ERR, 0.0f, 1.0f, 0.01f);
 	`MCM_API_AddSlider(GroupDuration, EXTRA_XP_MULT, 0.0f, 2.0f, 0.05f);
 	`MCM_API_AddSlider(GroupDuration, EXTRA_CORPSES, 0, 5, 1);
 
 	GroupDeathLink = Page.AddGroup('DeathLink', default.strGroupDeathLink);
+	`MCM_API_AddCheckbox(GroupDeathLink, DEATHLINK);
+	`MCM_API_AddSlider(GroupDeathLink, DEATHLINK_CHANCE, 0.0f, 1.0f, 0.01f);
 	`MCM_API_AddCheckbox(GroupDeathLink, INSTANT_ROOKIE_TRAINING);
 	`MCM_API_AddCheckbox(GroupDeathLink, INSTANT_SPARK_BUILDING);
 	`MCM_API_AddCheckbox(GroupDeathLink, REFUND_SPARK_COST);
@@ -158,6 +167,9 @@ simulated function LoadSavedSettings()
 	`MCM_API_LoadSetting(EXTRA_XP_MULT);
 	`MCM_API_LoadSetting(EXTRA_CORPSES);
 
+	`MCM_API_LoadSetting(DEATHLINK);
+	`MCM_API_LoadSetting(DEATHLINK_CHANCE);
+
 	`MCM_API_LoadSetting(INSTANT_ROOKIE_TRAINING);
 	`MCM_API_LoadSetting(INSTANT_SPARK_BUILDING);
 	`MCM_API_LoadSetting(REFUND_SPARK_COST);
@@ -185,6 +197,9 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 
 	`MCM_API_RestoreDefault(EXTRA_XP_MULT);
 	`MCM_API_RestoreDefault(EXTRA_CORPSES);
+
+	`MCM_API_RestoreDefault(DEATHLINK);
+	`MCM_API_RestoreDefault(DEATHLINK_CHANCE);
 
 	`MCM_API_RestoreDefault(INSTANT_ROOKIE_TRAINING);
 	`MCM_API_RestoreDefault(INSTANT_SPARK_BUILDING);
@@ -236,6 +251,9 @@ static function LoadAndSaveAPDefaults()
 
 		`MCM_API_LoadAPDefault(EXTRA_XP_MULT);
 		`MCM_API_LoadAPDefault(EXTRA_CORPSES);
+
+		`MCM_API_LoadAPDefault(DEATHLINK);
+		`MCM_API_LoadAPDefault(DEATHLINK_CHANCE);
 
 		`MCM_API_LoadAPDefault(INSTANT_ROOKIE_TRAINING);
 		`MCM_API_LoadAPDefault(INSTANT_SPARK_BUILDING);

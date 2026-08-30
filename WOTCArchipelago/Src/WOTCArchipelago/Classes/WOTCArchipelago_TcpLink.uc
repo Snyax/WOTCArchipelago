@@ -54,7 +54,7 @@ function Call(coerce string RequestPath,
 	OnRequestComplete = CompletionHandler;
 	OnRequestError = ErrorHandler;
 
-	bIsTickRequest = (Left(Path, 5) == "/Tick");
+	bIsTickRequest = ((Left(Path, 5) == "/Tick") || (Left(Path, 10) == "/DeathTick"));
 	TimeOutDelay = 3.0;
 
 	// Reset per-request state

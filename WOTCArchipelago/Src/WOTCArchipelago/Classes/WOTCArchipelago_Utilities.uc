@@ -140,6 +140,93 @@ static function int DecrementCounter(name CounterName, optional XComGameState Ne
 	return ReadCounter(CounterName, NewGameState);
 }
 
+static function string EscapeURL(coerce string Str)
+{
+	// This first obviously
+	Str = Repl(Str, "%", "%25");
+
+	// Reserved characters
+	Str = Repl(Str, "!", "%21");
+	Str = Repl(Str, "#", "%23");
+	Str = Repl(Str, "$", "%24");
+	Str = Repl(Str, "&", "%26");
+	Str = Repl(Str, "'", "%27");
+	Str = Repl(Str, "(", "%28");
+	Str = Repl(Str, ")", "%29");
+	Str = Repl(Str, "*", "%2A");
+	Str = Repl(Str, "+", "%2B");
+	Str = Repl(Str, ",", "%2C");
+	Str = Repl(Str, "/", "%2F");
+	Str = Repl(Str, ":", "%3A");
+	Str = Repl(Str, ";", "%3B");
+	Str = Repl(Str, "=", "%3D");
+	Str = Repl(Str, "?", "%3F");
+	Str = Repl(Str, "@", "%40");
+	Str = Repl(Str, "[", "%5B");
+	Str = Repl(Str, "]", "%5D");
+
+	// Special characters
+	Str = Repl(Str, " ", "%20");
+	Str = Repl(Str, "\"", "%22");
+	Str = Repl(Str, "-", "%2D");
+	Str = Repl(Str, ".", "%2E");
+	Str = Repl(Str, "<", "%3C");
+	Str = Repl(Str, ">", "%3E");
+	Str = Repl(Str, "\\", "%5C");
+	Str = Repl(Str, "^", "%5E");
+	Str = Repl(Str, "_", "%5F");
+	Str = Repl(Str, "`", "%60");
+	Str = Repl(Str, "{", "%7B");
+	Str = Repl(Str, "|", "%7C");
+	Str = Repl(Str, "}", "%7D");
+	Str = Repl(Str, "~", "%7E");
+	Str = Repl(Str, "´", "%C2%B4");
+
+	// Non-latin letter characters
+	Str = Repl(Str, "À", "%C3%80", true);
+	Str = Repl(Str, "Á", "%C3%81", true);
+	Str = Repl(Str, "Â", "%C3%82", true);
+	Str = Repl(Str, "Ä", "%C3%84", true);
+	Str = Repl(Str, "Ç", "%C3%87", true);
+	Str = Repl(Str, "È", "%C3%88", true);
+	Str = Repl(Str, "É", "%C3%89", true);
+	Str = Repl(Str, "Ê", "%C3%8A", true);
+	Str = Repl(Str, "Ì", "%C3%8C", true);
+	Str = Repl(Str, "Í", "%C3%8D", true);
+	Str = Repl(Str, "Î", "%C3%8E", true);
+	Str = Repl(Str, "Ò", "%C3%92", true);
+	Str = Repl(Str, "Ó", "%C3%93", true);
+	Str = Repl(Str, "Ô", "%C3%94", true);
+	Str = Repl(Str, "Ö", "%C3%96", true);
+	Str = Repl(Str, "Ù", "%C3%99", true);
+	Str = Repl(Str, "Ú", "%C3%9A", true);
+	Str = Repl(Str, "Û", "%C3%9B", true);
+	Str = Repl(Str, "Ü", "%C3%9C", true);
+	Str = Repl(Str, "ß", "%C3%9F", true);
+	Str = Repl(Str, "à", "%C3%A0", true);
+	Str = Repl(Str, "á", "%C3%A1", true);
+	Str = Repl(Str, "â", "%C3%A2", true);
+	Str = Repl(Str, "ä", "%C3%A4", true);
+	Str = Repl(Str, "ç", "%C3%A7", true);
+	Str = Repl(Str, "è", "%C3%A8", true);
+	Str = Repl(Str, "é", "%C3%A9", true);
+	Str = Repl(Str, "ê", "%C3%AA", true);
+	Str = Repl(Str, "ì", "%C3%AC", true);
+	Str = Repl(Str, "í", "%C3%AD", true);
+	Str = Repl(Str, "î", "%C3%AE", true);
+	Str = Repl(Str, "ñ", "%C3%B1", true);
+	Str = Repl(Str, "ò", "%C3%B2", true);
+	Str = Repl(Str, "ó", "%C3%B3", true);
+	Str = Repl(Str, "ô", "%C3%B4", true);
+	Str = Repl(Str, "ö", "%C3%B6", true);
+	Str = Repl(Str, "ù", "%C3%B9", true);
+	Str = Repl(Str, "ú", "%C3%BA", true);
+	Str = Repl(Str, "û", "%C3%BB", true);
+	Str = Repl(Str, "ü", "%C3%BC", true);
+	
+	return Str;
+}
+
 static function string InsertUnitInfo(coerce string Str, XComGameState_Unit UnitState)
 {
 	Str = Repl(Str, default.strFirstName, UnitState.GetName(eNameType_First));

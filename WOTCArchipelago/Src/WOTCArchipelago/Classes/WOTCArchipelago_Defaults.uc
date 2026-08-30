@@ -28,6 +28,10 @@ var config float DEF_SKIP_RAID_REWARD_MULT_ERR;
 var config float DEF_EXTRA_XP_MULT;
 var config int DEF_EXTRA_CORPSES;
 
+// DeathLink
+var config bool DEF_DEATHLINK;
+var config float DEF_DEATHLINK_CHANCE;
+
 // Improve access to soldiers
 var config bool DEF_INSTANT_ROOKIE_TRAINING;
 var config bool DEF_INSTANT_SPARK_BUILDING;
