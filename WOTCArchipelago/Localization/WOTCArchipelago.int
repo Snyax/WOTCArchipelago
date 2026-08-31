@@ -23,6 +23,17 @@ strDoomTrapMessage="Archipelago Trap"
 strDialogAccept="OK"
 strTacticalMessageTitle="Archipelago"
 
+[X2DLCInfo_WOTCArchipelago]
+strObjectiveOverrideAutopsyACaptainTitle="Find [Tech] ADVENT Officer Autopsy"
+strObjectiveOverrideStudyCodexBrainPt1Title="Find [Tech] Codex Brain"
+strObjectiveOverrideStudyCodexBrainPt2Title="Find [Tech] Encrypted Codex Data"
+strObjectiveOverrideStudyBlacksiteDataTitle="Find [Tech] Blacksite Vial"
+strObjectiveOverrideBuildStasisSuitTitle="Find [Tech] Recovered ADVENT Stasis Suit"
+strObjectiveOverrideResearchAlienEncryptionTitle="Find [Tech] Alien Encryption"
+strObjectiveOverrideResearchPsiGateTitle="Find [Tech] Psionic Gate"
+strObjectiveOverrideAutopsyTheAvatarTitle="Find [Tech] Avatar Autopsy"
+strObjectiveOverrideDesc="The item we need is hidden somewhere inside the multiworld. Finding it may require a team effort."
+
 [WOTCArchipelago_MCMScreen]
 strMenuPageTitle="X2WOTC Archipelago"
 strSettingsPageTitle="XCOM 2 WOTC Archipelago"

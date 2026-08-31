@@ -12,6 +12,16 @@ var config bool bRemoveScienceRequirements;
 var config bool bRemoveEngineeringRequirements;
 var config bool bRemoveCorpseCosts;
 
+var localized string strObjectiveOverrideAutopsyACaptainTitle;
+var localized string strObjectiveOverrideStudyCodexBrainPt1Title;
+var localized string strObjectiveOverrideStudyCodexBrainPt2Title;
+var localized string strObjectiveOverrideStudyBlacksiteDataTitle;
+var localized string strObjectiveOverrideBuildStasisSuitTitle;
+var localized string strObjectiveOverrideResearchAlienEncryptionTitle;
+var localized string strObjectiveOverrideResearchPsiGateTitle;
+var localized string strObjectiveOverrideAutopsyTheAvatarTitle;
+var localized string strObjectiveOverrideDesc;
+
 delegate ModifyTemplate(X2DataTemplate DataTemplate);
 
 
@@ -270,15 +280,26 @@ private static function PatchStrategyElementTemplates(X2DataTemplate DataTemplat
 				ObjectiveTemplate.NextObjectives.AddItem('T3_M1_ResearchAlienEncryption');
 				// Narrative triggers are unchanged for tutorial objectives
 				break;
+			case 'T1_M1_AutopsyACaptainTutorial':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideAutopsyACaptainTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
+				ObjectiveTemplate.InProgressFn = ReturnTrue;
+				// Narrative triggers are unchanged for tutorial objectives
+				break;
 			case 'T1_M0_FirstMission':
 				ObjectiveTemplate.NextObjectives.AddItem('T1_M1_AutopsyACaptain');
 				ObjectiveTemplate.NextObjectives.AddItem('T3_M1_ResearchAlienEncryption');
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Annoying cutscenes
 				break;
 			case 'T1_M1_AlienBiotech':
+				// bNeverShowObjective is true by default
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Irrelevant nag
 				break;
 			case 'T1_M1_AutopsyACaptain':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideAutopsyACaptainTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Immediate cutscene, jump to labs, irrelevant nag
 				break;
@@ -286,36 +307,59 @@ private static function PatchStrategyElementTemplates(X2DataTemplate DataTemplat
 				ObjectiveTemplate.RevealEvent = '';  // Originally 'OnEnteredFacility_PowerCore'
 				break;
 			case 'T1_M4_S1_StudyCodexBrainPt1':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideStudyCodexBrainPt1Title;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Irrelevant nag
 				break;
 			case 'T1_M4_S1_StudyCodexBrainPt2':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideStudyCodexBrainPt2Title;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				break;
 			case 'T2_M2_StudyBlacksiteData':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideStudyBlacksiteDataTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Irrelevant nag
 				break;
 			case 'T2_M4_BuildStasisSuit':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideBuildStasisSuitTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				break;
 			case 'T3_M1_ResearchAlienEncryption':
-				ObjectiveTemplate.RevealEvent = '';  // Originally 'PostMissionDone'
+				ObjectiveTemplate.Title = default.strObjectiveOverrideResearchAlienEncryptionTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
+				ObjectiveTemplate.RevealEvent = '';  // Originally 'PostMissionDone'
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Immediate pop-up
 				break;
 			case 'T3_M2_BuildShadowChamber':
 				ObjectiveTemplate.RevealEvent = '';  // Originally 'OnLabsExit'
 				break;
 			case 'T4_M2_S2_ResearchPsiGate':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideResearchPsiGateTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				ObjectiveTemplate.NarrativeTriggers.Length = 0;  // Irrelevant nag
 				break;
 			case 'T5_M1_AutopsyTheAvatar':
+				ObjectiveTemplate.Title = default.strObjectiveOverrideAutopsyTheAvatarTitle;
+				ObjectiveTemplate.LocLongDescription = default.strObjectiveOverrideDesc;
+				ObjectiveTemplate.SubObjectiveText = "";
+				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				ObjectiveTemplate.AssignmentRequirements.RequiredObjectives.RemoveItem('T1_M6_S0_RecoverAvatarCorpse');
 				ObjectiveTemplate.CompletionRequirements.RequiredItems.AddItem('PsiGateObjectiveCompleted');
 				ObjectiveTemplate.CompletionRequirements.RequiredItems.AddItem('StasisSuitObjectiveCompleted');
 				ObjectiveTemplate.CompletionRequirements.RequiredItems.AddItem('AvatarCorpseObjectiveCompleted');
+				break;
 		}
 	}
 	else

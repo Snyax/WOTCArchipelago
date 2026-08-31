@@ -65,6 +65,7 @@ protected function ContextBuildVisualization()
 		case eDeathLinkResult_Parry:
 			Message = `APUNITINFO(default.strDeathLinkParried, TargetUnitState);
 			MessageColor = eUIState_Good;
+			break;
 	}
 
 	MessageAction = X2Action_PlayMessageBanner(class'X2Action_PlayMessageBanner'.static.AddToVisualizationTree(ActionMetadata, self));
