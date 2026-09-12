@@ -13,22 +13,20 @@ static function array<X2DataTemplate> CreateTemplates()
 
 private static function X2DataTemplate CreateTurnStartActionPointAbility(name TemplateName, int NumActionPoints)
 {
-	local X2AbilityTemplate						Template;
-	local X2AbilityTrigger_UnitPostBeginPlay	Trigger;
-	local X2Effect_TurnStartActionPoints		TSAPEffect;
+	local X2AbilityTemplate					Template;
+	local X2Effect_TurnStartActionPoints	TSAPEffect;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, TemplateName);
 
 	Template.bDontDisplayInAbilitySummary = true;
-	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
 	Template.Hostility = eHostility_Neutral;
+	Template.bIsPassive = true;
 
 	Template.AbilityToHitCalc = default.DeadEye;
 	Template.AbilityTargetStyle = default.SelfTarget;
-
-	Trigger = new class'X2AbilityTrigger_UnitPostBeginPlay';
-	Template.AbilityTriggers.AddItem(Trigger);
+	Template.AbilityTriggers.AddItem(new class'X2AbilityTrigger_UnitPostBeginPlay');
 
 	TSAPEffect = new class'X2Effect_TurnStartActionPoints';
 	TSAPEffect.ActionPointType = class'X2CharacterTemplateManager'.default.StandardActionPoint;
@@ -44,22 +42,20 @@ private static function X2DataTemplate CreateTurnStartActionPointAbility(name Te
 
 private static function X2DataTemplate CreateNeverConsumeAllPointsAbility()
 {
-	local X2AbilityTemplate						Template;
-	local X2AbilityTrigger_UnitPostBeginPlay	Trigger;
-	local X2Effect_Persistent					DNCAPEffect;
+	local X2AbilityTemplate		Template;
+	local X2Effect_Persistent	DNCAPEffect;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, 'NeverConsumeAllPoints');
 
 	Template.bDontDisplayInAbilitySummary = true;
-	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
 	Template.Hostility = eHostility_Neutral;
+	Template.bIsPassive = true;
 
 	Template.AbilityToHitCalc = default.DeadEye;
 	Template.AbilityTargetStyle = default.SelfTarget;
-
-	Trigger = new class'X2AbilityTrigger_UnitPostBeginPlay';
-	Template.AbilityTriggers.AddItem(Trigger);
+	Template.AbilityTriggers.AddItem(new class'X2AbilityTrigger_UnitPostBeginPlay');
 
 	DNCAPEffect = new class'X2Effect_Persistent';
 	DNCAPEffect.EffectName = 'DoNotConsumeAllPoints';

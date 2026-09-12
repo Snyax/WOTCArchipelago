@@ -25,6 +25,17 @@ var localized string strObjectiveOverrideDesc;
 delegate ModifyTemplate(X2DataTemplate DataTemplate);
 
 
+exec function APPrintHistory(optional int HistoryPrintLimit = 0)
+{
+	`AMLOG(`XCOMHISTORY.HistoryDebugString(HistoryPrintLimit));
+}
+
+exec function APTriggerTrap(string TrapName, optional int Value = 1)
+{
+	`APCLIENT.TriggerTrap(name(TrapName), Value);
+}
+
+
 //=======================================================================================
 //                           ON POST TEMPLATES CREATED (OPTC)
 //---------------------------------------------------------------------------------------

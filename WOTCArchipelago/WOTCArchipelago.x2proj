@@ -72,6 +72,15 @@
     <Content Include="Src\WOTCArchipelago\Classes\X2Ability_EditActionPoints.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\X2Action_CameraLookAtPlayAnim.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\X2Camera_LookAtActorTimedPlayAnim.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\X2Camera_LookAtLocationTimedPlayAnim.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\WOTCArchipelago\Classes\X2Effect_ItemUseCheck.uc">
       <SubType>Content</SubType>
     </Content>
@@ -146,6 +155,15 @@
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_DeathLink.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_EarthquakeTrap.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_NoAmmoTrap.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_ReinforcementTrap.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\WOTCArchipelago\Classes\XComGameStateContext_TacticalMessage.uc">

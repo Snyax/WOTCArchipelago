@@ -28,6 +28,14 @@ var config bool bRequirePsiGate;
 var config bool bRequireStasisSuit;
 var config bool bRequireAvatarCorpse;
 
+var config array<name> AdventReinforcementEncounters;
+var config array<name> AlienReinforcementEncounters;
+
+var config bool bIgnoreMaxPanickingUnits;
+var config WillEventRollData MassPanicWillRollData;
+
+var config int MaxMagnitude;
+
 var localized string strRequestTimedOut;
 var localized string strRequestTimedOutDetails;
 var localized string strClientDisconnected;
@@ -38,7 +46,7 @@ var localized string strDisconnectedWarningDetails;
 var localized string strIncompatibleWarning;
 var localized string strIncompatibleWarningDetails;
 
-var localized string strDoomTrapMessage;
+var localized string strTrapMessage;
 var localized string strDialogAccept;
 var localized string strTacticalMessageTitle;
 
@@ -611,6 +619,10 @@ private function TickTacticalResponseHandler(WOTCArchipelago_TcpLink Link, HttpR
 		`APCTRINC('ItemsReceivedTactical');
 	}
 
+	// Repeat tick in case of surplus messages to make sure
+	// all items are received on the first possible turn
+	if (NumMessages < Messages.Length) SendTick();
+
 	ClearCheckBuffer();
 }
 
@@ -705,11 +717,9 @@ private function HandleMessage(string Message)
 	{
 		ItemData = SplitString(Mid(Lines[0], Len(TrapType)), ":");
 		ItemName = name(ItemData[0]);
-		ItemValue = int(ItemData[1]);
+		ItemValue = ItemData.Length >= 2 ? int(ItemData[1]) : 1;
 
-		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Triggering trap");
-		TriggerTrap(NewGameState, ItemName, ItemValue);
-		`GAMERULES.SubmitGameState(NewGameState);
+		TriggerTrap(ItemName, ItemValue);
 	}
 	else
 	{
@@ -762,41 +772,187 @@ private static function RaiseFactionInfluence(XComGameState NewGameState, option
 	`AMLOG("Increased influence of " $ FactionState.GetMyTemplateName());
 }
 
-private static function TriggerTrap(XComGameState NewGameState, name TrapName, optional int Quantity = 1)
+static function TriggerTrap(name TrapName, optional int Value = 1)
 {
-	local XComGameState_HeadquartersAlien	AlienHQ;
-	local int								StartingForceLevel;
-	local int								MaxForceLevel;
-	local int								Idx;
+	local bool										bDayOne;
+	local bool										bTurnOne;
+	local XComGameState								NewGameState;
+	local XComGameState_HeadquartersAlien			AlienHQ;
+	local int										StartingForceLevel;
+	local int										MaxForceLevel;
+	local XComGameState_BlackMarket					BlackMarket;
+	local int										Idx;
+	local XComGameStateContext_ReinforcementTrap	ReinforcementTrapContext;
+	local XComGameStateContext_NoAmmoTrap			NoAmmoTrapContext;
+	local int										MaxPanickingUnits;
+	local StateObjectReference						UnitRef;
+	local XComGameState_Unit						UnitState;
+	local XComGameStateContext_WillRoll				WillRollContext;
+	local XComGameStateContext_EarthquakeTrap		EarthquakeTrapContext;
 
-	// Ignore traps on the first day if the setting is active
-	if (class'X2StrategyGameRulesetDataStructures'.static.IsFirstDay(class'XComGameState_GeoscapeEntity'.static.GetCurrentTime()))
+	bDayOne = class'X2StrategyGameRulesetDataStructures'.static.IsFirstDay(class'XComGameState_GeoscapeEntity'.static.GetCurrentTime());
+
+	// Ignore all
+	if (`APCFG(NO_TRAPS))
 	{
-		if (`APCFG(NO_STARTING_TRAPS)) return;
+		`AMLOG("Ignored trap: " $ TrapName $ " x" $ Value);
+		return;
 	}
 
-	AlienHQ = XComGameState_HeadquartersAlien(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersAlien'));
-	AlienHQ = XComGameState_HeadquartersAlien(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersAlien', AlienHQ.ObjectID));
-
-	StartingForceLevel = class'XComGameState_HeadquartersAlien'.default.AlienHeadquarters_StartingForceLevel;
-	MaxForceLevel = class'XComGameState_HeadquartersAlien'.default.AlienHeadquarters_MaxForceLevel;
-
-	for (Idx = 0; Idx < Quantity; Idx++)
+	// Ignore on first day (strategy)
+	if (`HQPRES != none)
 	{
-		// Doom
-		if (TrapName == 'Doom')
+		if (bDayOne && `APCFG(NO_DAY_ONE_TRAPS))
 		{
-			`HQPRES.StrategyMap2D.StrategyMapHUD.SetDoomMessage(default.strDoomTrapMessage, false, false);
-			AlienHQ.ModifyDoom();
+			`AMLOG("Ignored day one trap: " $ TrapName $ " x" $ Value);
+			return;
 		}
-		// Force Level
-		else if (TrapName == 'ForceLevel')
+	}
+	// Ignore on first turn (tactical)
+	else
+	{
+		bTurnOne = class'XComGameState_ChallengeData'.static.CalcCurrentTurnNumber() == 1;
+		if (bTurnOne && (`APCFG(NO_TURN_ONE_TRAPS) || (bDayOne && `APCFG(NO_DAY_ONE_TRAPS))))
 		{
-			AlienHQ.ForceLevel = Clamp(AlienHQ.ForceLevel + 1, StartingForceLevel, MaxForceLevel);
+			`AMLOG("Ignored turn one trap: " $ TrapName $ " x" $ Value);
+			return;
 		}
 	}
 
-	`AMLOG("Triggered trap: " $ TrapName $ " x" $ Quantity);
+	// Doom
+	if (TrapName == 'Doom')
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Trigger doom trap");
+		AlienHQ = XComGameState_HeadquartersAlien(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersAlien'));
+		AlienHQ = XComGameState_HeadquartersAlien(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersAlien', AlienHQ.ObjectID));
+
+		`HQPRES.StrategyMap2D.StrategyMapHUD.SetDoomMessage(default.strTrapMessage, false, false);
+		AlienHQ.ModifyDoom(Value);
+
+		`GAMERULES.SubmitGameState(NewGameState);
+	}
+	// Force Level
+	else if (TrapName == 'ForceLevel')
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Trigger force level trap");
+		AlienHQ = XComGameState_HeadquartersAlien(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersAlien'));
+		AlienHQ = XComGameState_HeadquartersAlien(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersAlien', AlienHQ.ObjectID));
+
+		StartingForceLevel = class'XComGameState_HeadquartersAlien'.default.AlienHeadquarters_StartingForceLevel;
+		MaxForceLevel = class'XComGameState_HeadquartersAlien'.default.AlienHeadquarters_MaxForceLevel;
+		AlienHQ.ForceLevel = Clamp(AlienHQ.ForceLevel + Value, StartingForceLevel, MaxForceLevel);
+
+		`GAMERULES.SubmitGameState(NewGameState);
+	}
+	// Hide Black Market
+	else if (TrapName == 'HideBlackMarket')
+	{
+		BlackMarket = XComGameState_BlackMarket(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BlackMarket'));
+		if (!BlackMarket.bIsOpen && !BlackMarket.bNeedsScan)
+		{
+			`AMLOG("Ignored HideBlackMarket trap because black market is closed");
+			return;
+		}
+
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Trigger hide black market trap");
+		BlackMarket = XComGameState_BlackMarket(NewGameState.ModifyStateObject(class'XComGameState_BlackMarket', BlackMarket.ObjectID));
+
+		if (BlackMarket.bNeedsScan)
+		{
+			BlackMarket.AddScanDays(Value);
+			BlackMarket.bNeedsAppearedPopup = true;
+		}
+		else
+		{
+			BlackMarket.bIsOpen = false;
+			BlackMarket.bNeedsScan = true;
+			BlackMarket.bNeedsAppearedPopup = true;
+			BlackMarket.ResetScan();
+		}
+
+		`GAMERULES.SubmitGameState(NewGameState);
+	}
+	// Yap Central
+	else if (TrapName == 'YapCentral')
+	{
+		for (Idx = 0; Idx < Value; Idx++)
+		{
+			`HQPRES.UINarrative(XComNarrativeMoment'X2NarrativeMoments.S_Setup_Phase_Fortress_Adds_Doom_Central');
+		}
+	}
+	// ADVENT Reinforcement
+	else if (TrapName == 'AdventReinforcement')
+	{
+		ReinforcementTrapContext = XComGameStateContext_ReinforcementTrap(class'XComGameStateContext_ReinforcementTrap'.static.CreateXComGameStateContext());
+		ReinforcementTrapContext.EncounterID = default.AdventReinforcementEncounters[`SYNC_RAND_STATIC(default.AdventReinforcementEncounters.Length)];
+		`GAMERULES.SubmitGameStateContext(ReinforcementTrapContext);
+	}
+	// Alien Reinforcement
+	else if (TrapName == 'AlienReinforcement')
+	{
+		ReinforcementTrapContext = XComGameStateContext_ReinforcementTrap(class'XComGameStateContext_ReinforcementTrap'.static.CreateXComGameStateContext());
+		ReinforcementTrapContext.EncounterID = default.AlienReinforcementEncounters[`SYNC_RAND_STATIC(default.AlienReinforcementEncounters.Length)];
+		`GAMERULES.SubmitGameStateContext(ReinforcementTrapContext);
+	}
+	// No Ammo
+	else if (TrapName == 'NoAmmo')
+	{
+		NoAmmoTrapContext = XComGameStateContext_NoAmmoTrap(class'XComGameStateContext_NoAmmoTrap'.static.CreateXComGameStateContext());
+		`GAMERULES.SubmitGameStateContext(NoAmmoTrapContext);
+	}
+	// Mass Panic
+	else if (TrapName == 'MassPanic')
+	{
+		// Temporarily ignore MAX_PANICKING_UNITS
+		MaxPanickingUnits = class'X2StatusEffects'.default.MAX_PANICKING_UNITS;
+		if (default.bIgnoreMaxPanickingUnits) class'X2StatusEffects'.default.MAX_PANICKING_UNITS = 999;
+
+		foreach `XCOMHQ.Squad(UnitRef)
+		{
+			if (UnitRef.ObjectID == 0) continue;
+			UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
+			if (UnitState == none) continue;
+
+			WillRollContext = class'XComGameStateContext_WillRoll'.static.CreateWillRollContext(UnitState, 'APTrap', default.strTrapMessage, true);
+			WillRollContext.DoWillRoll(default.MassPanicWillRollData);
+			WillRollContext.Submit();
+		}
+
+		// Restore default MAX_PANICKING_UNITS
+		class'X2StatusEffects'.default.MAX_PANICKING_UNITS = MaxPanickingUnits;
+	}
+	// Earthquake
+	else if (TrapName == 'Earthquake')
+	{
+		EarthquakeTrapContext = XComGameStateContext_EarthquakeTrap(class'XComGameStateContext_EarthquakeTrap'.static.CreateXComGameStateContext());
+		EarthquakeTrapContext.Magnitude = `SYNC_RAND_STATIC(default.MaxMagnitude) + 1;
+		`AMLOG("Magnitude " $ EarthquakeTrapContext.Magnitude);
+
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', UnitState)
+		{
+			if (UnitState.ObjectID == 0) continue;
+			if (UnitState.IsDead() || UnitState.IsIncapacitated()) continue;
+			if (UnitState.IsImmuneToDamage(class'X2Item_DefaultDamageTypes'.default.KnockbackDamageType)) continue;
+			if (UnitState.GetMyTemplate().bCanUse_eTraversal_Flying) continue;
+			if (UnitState.UnitSize > 1) continue;
+
+			UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitState.ObjectID));
+			if (UnitState == none) continue;
+
+			UnitRef = UnitState.GetReference();
+			EarthquakeTrapContext.AffectedUnits.AddItem(UnitRef);
+			if (UnitState.GetTeam() == eTeam_XCom) EarthquakeTrapContext.LookAtUnits.AddItem(UnitRef);
+		}
+
+		`GAMERULES.SubmitGameStateContext(EarthquakeTrapContext);
+	}
+	else
+	{
+		`AMLOG("Failed to trigger unrecognized trap: " $ TrapName);
+		return;
+	}
+
+	`AMLOG("Triggered trap: " $ TrapName $ " x" $ Value);
 }
 
 

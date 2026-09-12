@@ -56,8 +56,10 @@ var config string CFG_AP_GEN_ID;
 `MCM_API_CheckboxVars(REFUND_SPARK_COST);
 `MCM_API_CheckboxVars(REPLACE_FACTION_HERO);
 
-// Disable day 1 traps
-`MCM_API_CheckboxVars(NO_STARTING_TRAPS);
+// Disable traps
+`MCM_API_CheckboxVars(NO_TRAPS);
+`MCM_API_CheckboxVars(NO_DAY_ONE_TRAPS);
+`MCM_API_CheckboxVars(NO_TURN_ONE_TRAPS);
 
 // MCM version
 var config int CFG_VERSION;
@@ -89,7 +91,9 @@ var config int CFG_VERSION;
 `MCM_API_CheckboxFns(REFUND_SPARK_COST);
 `MCM_API_CheckboxFns(REPLACE_FACTION_HERO);
 
-`MCM_API_CheckboxFns(NO_STARTING_TRAPS);
+`MCM_API_CheckboxFns(NO_TRAPS);
+`MCM_API_CheckboxFns(NO_DAY_ONE_TRAPS);
+`MCM_API_CheckboxFns(NO_TURN_ONE_TRAPS);
 
 `MCM_API_VersionChecker(VERSION);
 
@@ -142,7 +146,9 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	`MCM_API_AddCheckbox(GroupDeathLink, REPLACE_FACTION_HERO);
 
 	GroupTraps = Page.AddGroup('Traps', default.strGroupTraps);
-	`MCM_API_AddCheckbox(GroupTraps, NO_STARTING_TRAPS);
+	`MCM_API_AddCheckbox(GroupTraps, NO_TRAPS);
+	`MCM_API_AddCheckbox(GroupTraps, NO_DAY_ONE_TRAPS);
+	`MCM_API_AddCheckbox(GroupTraps, NO_TURN_ONE_TRAPS);
 
     Page.ShowSettings();
 }
@@ -175,7 +181,9 @@ simulated function LoadSavedSettings()
 	`MCM_API_LoadSetting(REFUND_SPARK_COST);
 	`MCM_API_LoadSetting(REPLACE_FACTION_HERO);
 
-	`MCM_API_LoadSetting(NO_STARTING_TRAPS);
+	`MCM_API_LoadSetting(NO_TRAPS);
+	`MCM_API_LoadSetting(NO_DAY_ONE_TRAPS);
+	`MCM_API_LoadSetting(NO_TURN_ONE_TRAPS);
 }
 
 simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
@@ -206,7 +214,9 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 	`MCM_API_RestoreDefault(REFUND_SPARK_COST);
 	`MCM_API_RestoreDefault(REPLACE_FACTION_HERO);
 
-	`MCM_API_RestoreDefault(NO_STARTING_TRAPS);
+	`MCM_API_RestoreDefault(NO_TRAPS);
+	`MCM_API_RestoreDefault(NO_DAY_ONE_TRAPS);
+	`MCM_API_RestoreDefault(NO_TURN_ONE_TRAPS);
 }
 
 simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
@@ -260,7 +270,9 @@ static function LoadAndSaveAPDefaults()
 		`MCM_API_LoadAPDefault(REFUND_SPARK_COST);
 		`MCM_API_LoadAPDefault(REPLACE_FACTION_HERO);
 
-		`MCM_API_LoadAPDefault(NO_STARTING_TRAPS);
+		`MCM_API_LoadAPDefault(NO_TRAPS);
+		`MCM_API_LoadAPDefault(NO_DAY_ONE_TRAPS);
+		`MCM_API_LoadAPDefault(NO_TURN_ONE_TRAPS);
 
 		default.CFG_VERSION = `MCM_CH_GetCompositeVersion();
 		class'WOTCArchipelago_MCMScreen'.static.StaticSaveConfig();

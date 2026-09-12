@@ -19,7 +19,7 @@ strDisconnectedWarningDetails="Please connect to your slot and restart the game.
 strIncompatibleWarning="Version Incompatible"
 strIncompatibleWarningDetails="This mod version is incompatible with the client version.\nPlease install the appropriate mod version.\nUse the /version command in the XCOM 2 WotC AP Client for more info."
 
-strDoomTrapMessage="Archipelago Trap"
+strTrapMessage="Archipelago Trap"
 strDialogAccept="OK"
 strTacticalMessageTitle="Archipelago"
 
@@ -83,8 +83,12 @@ REPLACE_FACTION_HERO_LABEL="Replace Faction Heroes"
 REPLACE_FACTION_HERO_DESC="Gain automatic replacements for dead or missing faction heroes."
 
 strGroupTraps="Traps"
-NO_STARTING_TRAPS_LABEL="Disable Day One Traps"
-NO_STARTING_TRAPS_DESC="Traps have no effect when received on the first day of a campaign."
+NO_TRAPS_LABEL="Disable All Traps"
+NO_TRAPS_DESC="Traps have no effect."
+NO_DAY_ONE_TRAPS_LABEL="Disable Day One Traps"
+NO_DAY_ONE_TRAPS_DESC="Traps have no effect when received on the first day of a campaign."
+NO_TURN_ONE_TRAPS_LABEL="Disable Turn One Traps"
+NO_TURN_ONE_TRAPS_DESC="Traps have no effect when received on the first turn of a mission."
 
 [XComGameStateContext_DeathLink]
 strDeathLinkReceived="DeathLink Received"

@@ -393,8 +393,12 @@ protected static function EventListenerReturn OnPromotion(Object EventData, Obje
 
 protected static function EventListenerReturn OnPlayerTurnBegun(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
 {
-	`APCLIENT.StartDeathTickLoop();
-	`APCLIENT.SendTick();
+	if (XComGameState_Player(EventSource).TeamFlag == eTeam_XCom)
+	{
+		`APCLIENT.StartDeathTickLoop();
+		`APCLIENT.SendTick();
+	}
+
 	return ELR_NoInterrupt;
 }
 

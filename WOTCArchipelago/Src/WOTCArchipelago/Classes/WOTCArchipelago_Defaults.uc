@@ -38,8 +38,10 @@ var config bool DEF_INSTANT_SPARK_BUILDING;
 var config bool DEF_REFUND_SPARK_COST;
 var config bool DEF_REPLACE_FACTION_HERO;
 
-// Disable day 1 traps
-var config bool DEF_NO_STARTING_TRAPS;
+// Disable traps
+var config bool DEF_NO_TRAPS;
+var config bool DEF_NO_DAY_ONE_TRAPS;
+var config bool DEF_NO_TURN_ONE_TRAPS;
 
 // MCM version
 var config int DEF_VERSION;
