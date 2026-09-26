@@ -30,6 +30,29 @@ exec function APPrintHistory(optional int HistoryPrintLimit = 0)
 	`AMLOG(`XCOMHISTORY.HistoryDebugString(HistoryPrintLimit));
 }
 
+exec function APReadCounter(string CounterName)
+{
+	`AMLOG("Read: " $ CounterName $ " x" $ `APCTRREAD(name(CounterName)));
+}
+
+exec function APIncrementCounter(string CounterName, optional bool bSameGameState = false)
+{
+	local XComGameState NewGameState;
+
+	if (bSameGameState) NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("APIncrementCounter");
+	`AMLOG("Increment: " $ CounterName $ " x" $ `APCTRINC(name(CounterName), NewGameState));
+	if (bSameGameState) `GAMERULES.SubmitGameState(NewGameState);
+}
+
+exec function APDecrementCounter(string CounterName, optional bool bSameGameState = false)
+{
+	local XComGameState NewGameState;
+
+	if (bSameGameState) NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("APDecrementCounter");
+	`AMLOG("Decrement: " $ CounterName $ " x" $ `APCTRDEC(name(CounterName), NewGameState));
+	if (bSameGameState) `GAMERULES.SubmitGameState(NewGameState);
+}
+
 exec function APTriggerTrap(string TrapName, optional int Value = 1)
 {
 	`APCLIENT.TriggerTrap(name(TrapName), Value);
