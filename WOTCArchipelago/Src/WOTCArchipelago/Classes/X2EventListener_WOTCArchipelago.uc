@@ -71,7 +71,7 @@ private static function X2EventListenerTemplate CreateListenerTemplate()
     return Template;
 }
 
-protected static function EventListenerReturn OnUnitDied(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
+protected static function EventListenerReturn OnUnitDied(Object EventData, Object EventSource, XComGameState GameState, name EventName, Object CallbackData)
 {
 	local XComGameState_Unit UnitState;
 
@@ -82,21 +82,15 @@ protected static function EventListenerReturn OnUnitDied(Object EventData, Objec
 
 	if (UnitState.GetTeam() == eTeam_Alien || UnitState.GetTeam() == eTeam_TheLost)
 	{
-		OnEnemyDied(NewGameState, UnitState);
+		OnEnemyDied(UnitState);
 	}
 	else if (UnitState.GetTeam() == eTeam_XCom)
 	{
-		if (UnitState.IsSoldier()) SendDeath(NewGameState, UnitState);
-		if (UnitState.GetMyTemplateName() == 'SparkSoldier') RefundSparkCost(NewGameState, UnitState);
+		if (UnitState.IsSoldier()) SendDeath(GameState, UnitState);
+		if (UnitState.GetMyTemplateName() == 'SparkSoldier') RefundSparkCost(UnitState);
 	}
 
 	return ELR_NoInterrupt;
-}
-
-private static function OnEnemyDied(XComGameState NewGameState, XComGameState_Unit EnemyState)
-{
-	DistributeExtraXP(NewGameState, EnemyState);
-	GiveExtraCorpses(NewGameState, EnemyState);
 }
 
 private static function SendUnitKillCheck(XComGameState_Unit UnitState)
@@ -127,11 +121,20 @@ private static function SendUnitKillCheck(XComGameState_Unit UnitState)
 		`APCLIENT.OnCheckReached(name("Kill" $ CharacterGroupName));
 }
 
-private static function DistributeExtraXP(XComGameState NewGameState, XComGameState_Unit EnemyState)
+private static function OnEnemyDied(XComGameState_Unit EnemyState)
 {
+	DistributeExtraXP(EnemyState);
+	GiveExtraCorpses(EnemyState);
+}
+
+private static function DistributeExtraXP(XComGameState_Unit EnemyState)
+{
+	local XComGameState			NewGameState;
 	local StateObjectReference	SoldierRef;
 	local XComGameState_Unit	SoldierState;
 	local float					ExtraXp;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Distribute Extra XP");
 
 	foreach `XCOMHQ.Squad(SoldierRef)
 	{
@@ -148,10 +151,13 @@ private static function DistributeExtraXP(XComGameState NewGameState, XComGameSt
 			SoldierState.BonusKills += ExtraXp; // Add to bonus kills (like Wet Work, Deeper Learning)
 		}
 	}
+
+	`GAMERULES.SubmitGameState(NewGameState);
 }
 
-private static function GiveExtraCorpses(XComGameState NewGameState, XComGameState_Unit EnemyState)
+private static function GiveExtraCorpses(XComGameState_Unit EnemyState)
 {
+	local XComGameState				NewGameState;
 	local X2LootTableManager		LootTableManager;
 	local XComGameState_BattleData	BattleData;
 	local array<LootReference>		LootRefs;
@@ -160,6 +166,8 @@ private static function GiveExtraCorpses(XComGameState NewGameState, XComGameSta
 	local array<name>				LootTemplateNames;
 	local name						LootTemplateName;
 	local int						Num;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Give Extra Corpses");
 
 	LootTableManager = class'X2LootTableManager'.static.GetLootTableManager();
 	BattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
@@ -180,9 +188,11 @@ private static function GiveExtraCorpses(XComGameState NewGameState, XComGameSta
 			}
 		}
 	}
+
+	`GAMERULES.SubmitGameState(NewGameState);
 }
 
-private static function SendDeath(XComGameState NewGameState, XComGameState_Unit Soldier)
+private static function SendDeath(XComGameState GameState, XComGameState_Unit Soldier)
 {
 	local string							Cause;
 	local XComGameStateContext				Context;
@@ -202,7 +212,7 @@ private static function SendDeath(XComGameState NewGameState, XComGameState_Unit
 	local array<StateObjectReference>		FlankingEnemies;
 	local bool								bFlanked;
 
-	Context = NewGameState.GetContext();
+	Context = GameState.GetContext();
 	TickEffectContext = XComGameStateContext_TickEffect(Context);
 	AbilityContext = XComGameStateContext_Ability(Context);
 
@@ -335,32 +345,35 @@ private static function SendDeath(XComGameState NewGameState, XComGameState_Unit
 	`APCLIENT.SendDeath(`APUNITINFO(Cause, Soldier));
 }
 
-private static function RefundSparkCost(XComGameState NewGameState, XComGameState_Unit UnitState)
+private static function RefundSparkCost(XComGameState_Unit UnitState)
 {
-	local SeqAct_ShowDramaticMessage SeqActShowDramaticMessage;
+	local XComGameState							NewGameState;
+	local XComGameStateContext_TacticalMessage	TacticalMessageContext;
 
 	if (!`APCFG(REFUND_SPARK_COST)) return;
 	
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Refund Spark Cost");
 	`APADDITEM(NewGameState, 'Supplies', default.RefundSparkCostSupplies);
 	`APADDITEM(NewGameState, 'AlienAlloy', default.RefundSparkCostAlloys);
 	`APADDITEM(NewGameState, 'EleriumDust', default.RefundSparkCostElerium);
 	`APADDITEM(NewGameState, 'EleriumCore', default.RefundSparkCostCores);
+	`GAMERULES.SubmitGameState(NewGameState);
 
-	SeqActShowDramaticMessage = new class'SeqAct_ShowDramaticMessage';
-	SeqActShowDramaticMessage.Title = class'WOTCArchipelago_APClient'.default.strTacticalMessageTitle;
-	SeqActShowDramaticMessage.Message1 = default.strSparkCostRefunded;
-	SeqActShowDramaticMessage.Message2 = `APUNITINFO(default.strSparkCostRefundedDetails, UnitState);
-	SeqActShowDramaticMessage.MessageColor = eUIState_Normal;
-	SeqActShowDramaticMessage.BuildVisualization(NewGameState);
+	TacticalMessageContext = XComGameStateContext_TacticalMessage(class'XComGameStateContext_TacticalMessage'.static.CreateXComGameStateContext());
+	TacticalMessageContext.Title = class'WOTCArchipelago_APClient'.default.strTacticalMessageTitle;
+	TacticalMessageContext.Message1 = default.strSparkCostRefunded;
+	TacticalMessageContext.Message2 = `APUNITINFO(default.strSparkCostRefundedDetails, UnitState);
+	TacticalMessageContext.MessageColor = eUIState_Normal;
+	`GAMERULES.SubmitGameStateContext(TacticalMessageContext);
 }
 
-protected static function EventListenerReturn OnXComVictory(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
+protected static function EventListenerReturn OnXComVictory(Object EventData, Object EventSource, XComGameState GameState, name EventName, Object CallbackData)
 {
 	`APCLIENT.OnCheckReached('Victory');
 	return ELR_NoInterrupt;
 }
 
-protected static function EventListenerReturn OnWalkUp(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
+protected static function EventListenerReturn OnWalkUp(Object EventData, Object EventSource, XComGameState GameState, name EventName, Object CallbackData)
 {
 	local XComGameState_MissionSite		MissionState;
 	local XComGameState_BattleData		BattleData;
@@ -375,23 +388,23 @@ protected static function EventListenerReturn OnWalkUp(Object EventData, Object 
 	BattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (BattleData.bChosenDefeated)
 	{
-		NumChosenDefeated = `APCTRINC('ChosenDefeated', NewGameState);
+		NumChosenDefeated = `APCTRINC('ChosenDefeated');
 		`APCLIENT.OnCheckReached(name("Stronghold" $ NumChosenDefeated));
 	}
 
 	// Check for promotions
-	`APCLIENT.HandleRanksanityPromotions(NewGameState);
+	`APCLIENT.HandleRanksanityPromotions();
 
 	return ELR_NoInterrupt;
 }
 
-protected static function EventListenerReturn OnPromotion(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
+protected static function EventListenerReturn OnPromotion(Object EventData, Object EventSource, XComGameState GameState, name EventName, Object CallbackData)
 {
-	`APCLIENT.HandleRanksanityPromotions(NewGameState);
+	`APCLIENT.HandleRanksanityPromotions();
 	return ELR_NoInterrupt;
 }
 
-protected static function EventListenerReturn OnPlayerTurnBegun(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
+protected static function EventListenerReturn OnPlayerTurnBegun(Object EventData, Object EventSource, XComGameState GameState, name EventName, Object CallbackData)
 {
 	if (XComGameState_Player(EventSource).TeamFlag == eTeam_XCom)
 	{
@@ -402,7 +415,7 @@ protected static function EventListenerReturn OnPlayerTurnBegun(Object EventData
 	return ELR_NoInterrupt;
 }
 
-protected static function EventListenerReturn OnTacticalGameEnd(Object EventData, Object EventSource, XComGameState NewGameState, name EventName, Object CallbackData)
+protected static function EventListenerReturn OnTacticalGameEnd(Object EventData, Object EventSource, XComGameState GameState, name EventName, Object CallbackData)
 {
 	`APCLIENT.CancelDeathTickLoop();
 	return ELR_NoInterrupt;
