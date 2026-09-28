@@ -10,7 +10,9 @@ class X2DLCInfo_WOTCArchipelago extends X2DownloadableContentInfo config(WOTCArc
 
 var config bool bRemoveScienceRequirements;
 var config bool bRemoveEngineeringRequirements;
+
 var config bool bRemoveCorpseCosts;
+var config array<name> RemoveCorpseCostsPGProjects;
 
 var localized string strObjectiveOverrideAutopsyACaptainTitle;
 var localized string strObjectiveOverrideStudyCodexBrainPt1Title;
@@ -258,7 +260,7 @@ private static function PatchItemTemplates(X2DataTemplate DataTemplate)
 	if (default.bRemoveEngineeringRequirements && bPatched && ItemTemplate.Requirements.RequiredEngineeringScore < 99999)
 		ItemTemplate.Requirements.RequiredEngineeringScore = 0;
 
-	// Remove corpse cost
+	// Remove corpse costs
 	if (default.bRemoveCorpseCosts)
 	{
 		for (Idx = 0; Idx < ItemTemplate.Cost.ArtifactCosts.Length; Idx++)
@@ -448,6 +450,8 @@ private static function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
 	local name							ReqTechTemplateName;
 	local X2CompletionItemTemplate		CompletionItemTemplate;
 	local name							CompletionItemTemplateName;
+	local int							Idx;
+	local array<ArtifactCost>			CorpseCosts;
 	local bool							bPatched;
 
 	TechTemplate = X2TechTemplate(DataTemplate);
@@ -476,6 +480,21 @@ private static function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
 	// Remove engineering requirement
 	if (default.bRemoveEngineeringRequirements && bPatched && TechTemplate.Requirements.RequiredEngineeringScore < 99999)
 		TechTemplate.Requirements.RequiredEngineeringScore = 0;
+
+	// Remove corpse costs (for specified proving ground projects)
+	if (default.bRemoveCorpseCosts && default.RemoveCorpseCostsPGProjects.Find(TechTemplate.DataName) != INDEX_NONE)
+	{
+		for (Idx = 0; Idx < TechTemplate.Cost.ArtifactCosts.Length; Idx++)
+		{
+			if (Caps(Left(string(TechTemplate.Cost.ArtifactCosts[Idx].ItemTemplateName), 6)) == "CORPSE")
+			{
+				CorpseCosts.AddItem(TechTemplate.Cost.ArtifactCosts[Idx]);
+				bPatched = true;
+			}
+		}
+
+		for (Idx = 0; Idx < CorpseCosts.Length; Idx++) TechTemplate.Cost.ArtifactCosts.RemoveItem(CorpseCosts[Idx]);
+	}
 
 	if (bPatched) `AMLOG("Patched " $ TechTemplate.Name);
 }
