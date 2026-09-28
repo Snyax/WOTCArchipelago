@@ -10,9 +10,7 @@ class X2DLCInfo_WOTCArchipelago extends X2DownloadableContentInfo config(WOTCArc
 
 var config bool bRemoveScienceRequirements;
 var config bool bRemoveEngineeringRequirements;
-
 var config bool bRemoveCorpseCosts;
-var config array<name> RemoveCorpseCostsPGProjects;
 
 var localized string strObjectiveOverrideAutopsyACaptainTitle;
 var localized string strObjectiveOverrideStudyCodexBrainPt1Title;
@@ -481,8 +479,8 @@ private static function PatchProvingGroundTemplates(X2DataTemplate DataTemplate)
 	if (default.bRemoveEngineeringRequirements && bPatched && TechTemplate.Requirements.RequiredEngineeringScore < 99999)
 		TechTemplate.Requirements.RequiredEngineeringScore = 0;
 
-	// Remove corpse costs (for specified proving ground projects)
-	if (default.bRemoveCorpseCosts && default.RemoveCorpseCostsPGProjects.Find(TechTemplate.DataName) != INDEX_NONE)
+	// Remove corpse costs
+	if (default.bRemoveCorpseCosts)
 	{
 		for (Idx = 0; Idx < TechTemplate.Cost.ArtifactCosts.Length; Idx++)
 		{
