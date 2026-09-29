@@ -93,6 +93,7 @@ NO_TURN_ONE_TRAPS_DESC="Traps have no effect when received on the first turn of 
 [XComGameStateContext_DeathLink]
 strDeathLinkReceived="DeathLink Received"
 strDeathLinkDodged="But {FullName} dodged it!"
+strDeathLinkWithstood="But {FullName} withstood it!"
 strDeathLinkParried="But {FullName} parried it!"
 
 [X2EventListener_WOTCArchipelago]

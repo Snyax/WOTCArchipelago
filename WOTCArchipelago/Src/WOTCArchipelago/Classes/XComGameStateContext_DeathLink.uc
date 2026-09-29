@@ -4,6 +4,7 @@ enum EDeathLinkResult
 {
 	eDeathLinkResult_Hit,
 	eDeathLinkResult_Miss,
+	eDeathLinkResult_Tank,
 	eDeathLinkResult_Parry,
 };
 
@@ -13,6 +14,7 @@ var EDeathLinkResult Result;
 
 var localized string strDeathLinkReceived;
 var localized string strDeathLinkDodged;
+var localized string strDeathLinkWithstood;
 var localized string strDeathLinkParried;
 
 function bool Validate(optional EInterruptionStatus InInterruptionStatus)
@@ -41,9 +43,10 @@ protected function ContextBuildVisualization()
 {
 	local VisualizationActionMetadata	ActionMetadata;
 	local X2VisualizerInterface			TargetVisualizerInterface;
+	local XComGameState_Unit			TargetUnitState;
+	local X2Action_CameraLookAt			LookAtCamera;
 	local X2Action_PlayAnimation		AnimationAction;
 	local X2Action_PlayMessageBanner	MessageAction;
-	local XComGameState_Unit			TargetUnitState;
 	local string						Message;
 	local EUIState						MessageColor;
 
@@ -51,7 +54,7 @@ protected function ContextBuildVisualization()
 	`XCOMHISTORY.GetCurrentAndPreviousGameStatesForObjectID(TargetUnit.ObjectID, ActionMetadata.StateObject_OldState, ActionMetadata.StateObject_NewState, eReturnType_Reference, AssociatedState.HistoryIndex);
 
 	// Message banner
-	TargetUnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(TargetUnit.ObjectID));
+	TargetUnitState = XComGameState_Unit(ActionMetadata.StateObject_NewState);
 	switch (Result)
 	{
 		case eDeathLinkResult_Hit:
@@ -62,22 +65,38 @@ protected function ContextBuildVisualization()
 			Message = `APUNITINFO(default.strDeathLinkDodged, TargetUnitState);
 			MessageColor = eUIState_Normal;
 			break;
+		case eDeathLinkResult_Tank:
+			Message = `APUNITINFO(default.strDeathLinkWithstood, TargetUnitState);
+			MessageColor = eUIState_Good;
+			break;
 		case eDeathLinkResult_Parry:
 			Message = `APUNITINFO(default.strDeathLinkParried, TargetUnitState);
 			MessageColor = eUIState_Good;
 			break;
 	}
 
-	MessageAction = X2Action_PlayMessageBanner(class'X2Action_PlayMessageBanner'.static.AddToVisualizationTree(ActionMetadata, self));
+	MessageAction = X2Action_PlayMessageBanner(class'X2Action_PlayMessageBanner'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded));
 	MessageAction.AddMessageBanner(class'WOTCArchipelago_APClient'.default.strTacticalMessageTitle, "", default.strDeathLinkReceived, Message, MessageColor);
 
-	// Target unit animation
-	if (Result == eDeathLinkResult_Parry)
+	// Look at unit
+	LookAtCamera = X2Action_CameraLookAt(class'X2Action_CameraLookAt'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded));
+	LookAtCamera.LookAtActor = ActionMetadata.VisualizeActor;
+	LookAtCamera.BlockUntilActorOnScreen = true;
+
+	// Play unit animation
+	if (Result == eDeathLinkResult_Tank)
 	{
-		AnimationAction = X2Action_PlayAnimation(class'X2Action_PlayAnimation'.static.AddToVisualizationTree(ActionMetadata, self));
+		LookAtCamera.LookAtDuration = 3.0;
+		AnimationAction = X2Action_PlayAnimation(class'X2Action_PlayAnimation'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded));
+		AnimationAction.Params.AnimName = 'HL_Psi_MindControlled';
+	}
+	else if (Result == eDeathLinkResult_Parry)
+	{
+		LookAtCamera.LookAtDuration = 6.0;
+		AnimationAction = X2Action_PlayAnimation(class'X2Action_PlayAnimation'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded));
 		AnimationAction.Params.AnimName = 'HL_Psi_MindControl';
 	}
-	else class'X2Action_ApplyWeaponDamageToUnit'.static.AddToVisualizationTree(ActionMetadata, self);
+	else class'X2Action_ApplyWeaponDamageToUnit'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded);
 
 	TargetVisualizerInterface = X2VisualizerInterface(ActionMetadata.VisualizeActor);
 	if (TargetVisualizerInterface != none) TargetVisualizerInterface.BuildAbilityEffectsVisualization(AssociatedState, ActionMetadata);

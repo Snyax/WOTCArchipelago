@@ -311,7 +311,8 @@ private function DeathTickResponseHandler(WOTCArchipelago_TcpLink Link, HttpResp
 				// Roll DeathLink result
 				if (`SYNC_FRAND() < `APCFG(DEATHLINK_CHANCE))
 				{
-					if (UnitState.IsPsionic()) DeathLinkContext.Result = eDeathLinkResult_Parry;
+					if (UnitState.GetMyTemplateName() == 'AdvPsiWitchM2') DeathLinkContext.Result = eDeathLinkResult_Parry;
+					else if (UnitState.IsPsionic()) DeathLinkContext.Result = eDeathLinkResult_Tank;
 					else DeathLinkContext.Result = eDeathLinkResult_Hit;
 				}
 				else DeathLinkContext.Result = eDeathLinkResult_Miss;
