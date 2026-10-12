@@ -1,5 +1,6 @@
-// Most of this code by https://github.com/chrishayesmu
+// The contents of this file are modified off of work by https://github.com/chrishayesmu
 // See: https://github.com/chrishayesmu/XCOM2-Twitch-Integration/blob/master/Twitch%20Integration/Src/TwitchIntegration/Classes/HttpGetRequest.uc
+// Original license at ./LICENSE-WOTCArchipelago_TcpLink
 
 class WOTCArchipelago_TcpLink extends TcpLink config(WOTCArchipelago);
 
