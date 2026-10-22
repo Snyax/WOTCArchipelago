@@ -32,7 +32,6 @@
     <Content Include="Config\XComWOTCArchipelago_Spoiler.ini">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="ReadMe.txt" />
     <Content Include="ModPreview.jpg" />
     <Content Include="Config\Base\XComEditor.ini" />
     <Content Include="Config\Base\XComEngine.ini" />
