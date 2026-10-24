@@ -32,6 +32,8 @@ var config WillEventRollData MassPanicWillRollData;
 
 var config int MaxMagnitude;
 
+var config string YapCentralNarrative;
+
 var localized string strRequestTimedOut;
 var localized string strRequestTimedOutDetails;
 var localized string strClientDisconnected;
@@ -765,6 +767,7 @@ static function TriggerTrap(name TrapName, optional int Value = 1)
 	local int										StartingForceLevel;
 	local int										MaxForceLevel;
 	local XComGameState_BlackMarket					BlackMarket;
+	local XComNarrativeMoment						NarrativeMoment;
 	local int										Idx;
 	local XComGameStateContext_ReinforcementTrap	ReinforcementTrapContext;
 	local XComGameStateContext_NoAmmoTrap			NoAmmoTrapContext;
@@ -859,10 +862,9 @@ static function TriggerTrap(name TrapName, optional int Value = 1)
 	// Yap Central
 	else if (TrapName == 'YapCentral')
 	{
-		for (Idx = 0; Idx < Value; Idx++)
-		{
-			`HQPRES.UINarrative(XComNarrativeMoment'X2NarrativeMoments.S_Setup_Phase_Fortress_Adds_Doom_Central');
-		}
+		NarrativeMoment = XComNarrativeMoment(`CONTENT.RequestGameArchetype(default.YapCentralNarrative));
+		if (NarrativeMoment == none) `AMLOG("Could not find NarrativeMoment: " $ default.YapCentralNarrative);
+		else { for (Idx = 0; Idx < Value; Idx++) `HQPRES.UINarrative(NarrativeMoment); }
 	}
 	// ADVENT Reinforcement
 	else if (TrapName == 'AdventReinforcement')
