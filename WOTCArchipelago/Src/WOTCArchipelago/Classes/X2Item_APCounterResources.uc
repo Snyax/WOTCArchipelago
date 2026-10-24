@@ -23,11 +23,6 @@ static function array<X2DataTemplate> CreateTemplates()
 	// Chosen Defeated
 	APCounterItems.AddItem(CreateCounterTemplate('ChosenDefeated'));
 
-	// Story Objectives Completed
-	APCounterItems.AddItem(CreateCounterTemplate('PsiGateObjectiveCompleted'));
-	APCounterItems.AddItem(CreateCounterTemplate('StasisSuitObjectiveCompleted'));
-	APCounterItems.AddItem(CreateCounterTemplate('AvatarCorpseObjectiveCompleted'));
-
 	// Ranksanity Promotions Sent/Received
 	RanksanitySoldierClasses = class'WOTCArchipelago_Ranksanity'.static.GetEnabledSoldierClasses();
 	foreach RanksanitySoldierClasses(SoldierClass)

@@ -8,6 +8,10 @@
 
 class X2DLCInfo_WOTCArchipelago extends X2DownloadableContentInfo config(WOTCArchipelago);
 
+var config bool bRequirePsiGate;
+var config bool bRequireStasisSuit;
+var config bool bRequireAvatarCorpse;
+
 var config bool bRemoveScienceRequirements;
 var config bool bRemoveEngineeringRequirements;
 var config bool bRemoveCorpseCosts;
@@ -390,9 +394,9 @@ private static function PatchStrategyElementTemplates(X2DataTemplate DataTemplat
 				ObjectiveTemplate.SubObjectiveText = "";
 				ObjectiveTemplate.InProgressFn = ReturnTrue;
 				ObjectiveTemplate.AssignmentRequirements.RequiredObjectives.RemoveItem('T1_M6_S0_RecoverAvatarCorpse');
-				ObjectiveTemplate.CompletionRequirements.RequiredItems.AddItem('PsiGateObjectiveCompleted');
-				ObjectiveTemplate.CompletionRequirements.RequiredItems.AddItem('StasisSuitObjectiveCompleted');
-				ObjectiveTemplate.CompletionRequirements.RequiredItems.AddItem('AvatarCorpseObjectiveCompleted');
+				if (default.bRequirePsiGate) ObjectiveTemplate.AssignmentRequirements.RequiredObjectives.AddItem('T4_M2_ConstructPsiGate');
+				if (default.bRequireStasisSuit) ObjectiveTemplate.AssignmentRequirements.RequiredObjectives.AddItem('T2_M4_BuildStasisSuit');
+				if (default.bRequireAvatarCorpse) ObjectiveTemplate.AssignmentRequirements.RequiredObjectives.AddItem('T1_M6_S0_RecoverAvatarCorpse');
 				break;
 		}
 	}

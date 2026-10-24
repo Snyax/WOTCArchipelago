@@ -24,10 +24,6 @@ var private bool bShowCustomPopup;
 var private string CustomPopupTitle;
 var private string CustomPopupText;
 
-var config bool bRequirePsiGate;
-var config bool bRequireStasisSuit;
-var config bool bRequireAvatarCorpse;
-
 var config array<name> AdventReinforcementEncounters;
 var config array<name> AlienReinforcementEncounters;
 
@@ -386,25 +382,12 @@ function DoChores()
 
 private static function HandleObjectiveCompletion()
 {
-	local XComGameState_HeadquartersXCom	XComHQ;
-	local XComGameState						NewGameState;
-
-	XComHQ = `XCOMHQ;
-
-	// Add story objective completed counters to HQ inventory
-	if (!default.bRequirePsiGate || XComHQ.IsObjectiveCompleted('T4_M2_ConstructPsiGate')) `APCTRINC('PsiGateObjectiveCompleted');
-	if (!default.bRequireStasisSuit || XComHQ.IsObjectiveCompleted('T2_M4_BuildStasisSuit')) `APCTRINC('StasisSuitObjectiveCompleted');
-	if (!default.bRequireAvatarCorpse || XComHQ.IsObjectiveCompleted('T1_M6_S0_RecoverAvatarCorpse')) `APCTRINC('AvatarCorpseObjectiveCompleted');
+	local XComGameState NewGameState;
 
 	// HACK: Trigger ResearchCompleted event to complete sequence broken objectives (including final Avatar Autopsy objective)
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("HACK: Trigger ResearchCompleted event for sequence breaks");
 	`XEVENTMGR.TriggerEvent('ResearchCompleted', , , NewGameState);
 	`GAMERULES.SubmitGameState(NewGameState);
-
-	// Remove story objective completed counters from HQ inventory
-	`APCTRDEC('PsiGateObjectiveCompleted');
-	`APCTRDEC('StasisSuitObjectiveCompleted');
-	`APCTRDEC('AvatarCorpseObjectiveCompleted');
 }
 
 private static function HandleStrongholdUnlock()
