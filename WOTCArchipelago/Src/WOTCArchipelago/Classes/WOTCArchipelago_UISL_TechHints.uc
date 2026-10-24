@@ -80,6 +80,7 @@ private function HintResearchProjects(UIChooseResearch ResearchScreen)
 		// Hint classification
 		else if (`APCFG(HINT_TECH_LOC_PART))
 		{
+			if (TechSpoiler.bTrap) strClass = default.strClassProgression;
 			strItem = default.strItemPrefix $ "??? (" $ strClass $ ")";
 			ResearchScreen.arrItems[Idx].Desc = strItem $ strPlayer $ "\n\n\n" $ strHint;
 		}
