@@ -771,7 +771,6 @@ static function TriggerTrap(name TrapName, optional int Value = 1)
 	local int										StartingForceLevel;
 	local int										MaxForceLevel;
 	local XComGameState_BlackMarket					BlackMarket;
-	local XComNarrativeMoment						NarrativeMoment;
 	local int										Idx;
 	local XComGameStateContext_ReinforcementTrap	ReinforcementTrapContext;
 	local XComGameStateContext_NoAmmoTrap			NoAmmoTrapContext;
@@ -866,9 +865,16 @@ static function TriggerTrap(name TrapName, optional int Value = 1)
 	// Yap Central
 	else if (TrapName == 'YapCentral')
 	{
-		NarrativeMoment = XComNarrativeMoment(`CONTENT.RequestGameArchetype(default.YapCentralNarrative));
-		if (NarrativeMoment == none) `AMLOG("Could not find XComNarrativeMoment: " $ default.YapCentralNarrative);
-		else { for (Idx = 0; Idx < Value; Idx++) `HQPRES.UINarrative(NarrativeMoment); }
+		// Storing the XComNarrativeMoment in a local variable beforehand somehow breaks *only some of them*,
+		// so we just avoid it altogether and call RequestGameArchetype a bunch of times
+		if (XComNarrativeMoment(`CONTENT.RequestGameArchetype(default.YapCentralNarrative)) != none)
+		{
+			for (Idx = 0; Idx < Value; Idx++)
+			{
+				`HQPRES.UINarrative(XComNarrativeMoment(`CONTENT.RequestGameArchetype(default.YapCentralNarrative)));
+			}
+		}
+		else `AMLOG("Could not find XComNarrativeMoment: " $ default.YapCentralNarrative);
 	}
 	// ADVENT Reinforcement
 	else if (TrapName == 'AdventReinforcement')
