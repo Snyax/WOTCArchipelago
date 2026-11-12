@@ -32,12 +32,18 @@
     <Content Include="Config\XComWOTCArchipelago_Spoiler.ini">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="LICENSE-ModPreview">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="ModPreview.jpg" />
     <Content Include="Config\Base\XComEditor.ini" />
     <Content Include="Config\Base\XComEngine.ini" />
     <Content Include="Config\Base\XComGame.ini" />
     <Content Include="Localization\WOTCArchipelago.int" />
     <Content Include="Src\extra_globals.uci" />
+    <Content Include="Src\WOTCArchipelago\Classes\LICENSE-WOTCArchipelago_TcpLink">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\WOTCArchipelago\Classes\WOTCArchipelago_MCMListener.uc">
       <SubType>Content</SubType>
     </Content>
