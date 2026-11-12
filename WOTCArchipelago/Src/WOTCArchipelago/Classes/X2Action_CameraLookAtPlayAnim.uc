@@ -24,6 +24,7 @@ var float Rate;
 var float Intensity;
 var bool bLoop;
 var float DistortUI;
+var SoundCue Sound;
 
 // AP: custom cameras
 var private X2Camera_LookAtActorTimedPlayAnim LookAtActorCamera;
@@ -149,6 +150,7 @@ Begin:
 			LookAtActorCamera.Intensity = Intensity;
 			LookAtActorCamera.bLoop = bLoop;
 			LookAtActorCamera.DistortUI = DistortUI;
+			LookAtActorCamera.Sound = Sound;
 			`CAMERASTACK.AddCamera(LookAtActorCamera);
 
 			if( BlockUntilFinished )
@@ -219,4 +221,5 @@ defaultproperties
 	Intensity=1.0
 	bLoop=false
 	DistortUI=0.0
+	Sound=none
 }

@@ -1,12 +1,13 @@
 class XComGameStateContext_EarthquakeTrap extends XComGameStateContext config(WOTCArchipelago);
 
-var config string ScreenShakeAnim;
-var config float ScreenShakeDuration;
-var config float ScreenShakeRate;
-
 var array<StateObjectReference> AffectedUnits;
 var array<StateObjectReference> LookAtUnits;
 var int Magnitude;
+
+var string ScreenShakeAnim;
+var float ScreenShakeDuration;
+var float ScreenShakeRate;
+var SoundCue Sound;
 
 function bool Validate(optional EInterruptionStatus InInterruptionStatus)
 {
@@ -69,16 +70,17 @@ protected function ContextBuildVisualization()
 		// Camera shake
 		if (bShakeCamera)
 		{
+			bShakeCamera = false;
 			LookAtPlayAnimCamera = X2Action_CameraLookAtPlayAnim(class'X2Action_CameraLookAtPlayAnim'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded));
 			LookAtPlayAnimCamera.LookAtActor = ActionMetadata.VisualizeActor;
-			LookAtPlayAnimCamera.LookAtDuration = default.ScreenShakeDuration;
+			LookAtPlayAnimCamera.LookAtDuration = ScreenShakeDuration;
 			LookAtPlayAnimCamera.BlockUntilFinished = true;
-			LookAtPlayAnimCamera.Anim = default.ScreenShakeAnim;
-			LookAtPlayAnimCamera.Rate = default.ScreenShakeRate;
+			LookAtPlayAnimCamera.Anim = ScreenShakeAnim;
+			LookAtPlayAnimCamera.Rate = ScreenShakeRate;
 			LookAtPlayAnimCamera.Intensity = float(Magnitude) * 0.75;
 			LookAtPlayAnimCamera.bLoop = true;
-			if (Magnitude > 1) LookAtPlayAnimCamera.DistortUI = default.ScreenShakeDuration + 1.0;
-			bShakeCamera = false;
+			if (Magnitude > 1) LookAtPlayAnimCamera.DistortUI = ScreenShakeDuration + 1.0;
+			LookAtPlayAnimCamera.Sound = Sound;
 		}
 
 		LookAtCamera = X2Action_CameraLookAt(class'X2Action_CameraLookAt'.static.AddToVisualizationTree(ActionMetadata, self, false, ActionMetadata.LastActionAdded));

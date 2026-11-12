@@ -5,11 +5,13 @@ var float Rate;
 var float Intensity;
 var bool bLoop;
 var float DistortUI;
+var SoundCue Sound;
 
 function Activated(TPOV CurrentPOV, X2Camera PreviousActiveCamera, X2Camera_LookAt LastActiveLookAtCamera)
 {
 	PlayCameraAnim(Anim, Rate, Intensity, bLoop);
 	if (DistortUI > 0) `PRES.StartDistortUI(DistortUI);
+	if (Sound != none) ActorToFollow.PlaySound(Sound);
 
 	super.Activated(CurrentPOV, PreviousActiveCamera, LastActiveLookAtCamera);
 }
@@ -20,4 +22,5 @@ defaultproperties
 	Intensity=1.0
 	bLoop=false
 	DistortUI=0.0
+	Sound=none
 }

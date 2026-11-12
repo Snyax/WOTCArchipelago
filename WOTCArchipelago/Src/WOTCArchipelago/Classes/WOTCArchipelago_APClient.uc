@@ -30,7 +30,11 @@ var config array<name> AlienReinforcementEncounters;
 var config bool bIgnoreMaxPanickingUnits;
 var config WillEventRollData MassPanicWillRollData;
 
-var config int MaxMagnitude;
+var config int EarthquakeMaxMagnitude;
+var config string EarthquakeScreenShakeAnim;
+var config float EarthquakeScreenShakeDuration;
+var config float EarthquakeScreenShakeRate;
+var config string EarthquakeSound;
 
 var config string YapCentralNarrative;
 
@@ -863,7 +867,7 @@ static function TriggerTrap(name TrapName, optional int Value = 1)
 	else if (TrapName == 'YapCentral')
 	{
 		NarrativeMoment = XComNarrativeMoment(`CONTENT.RequestGameArchetype(default.YapCentralNarrative));
-		if (NarrativeMoment == none) `AMLOG("Could not find NarrativeMoment: " $ default.YapCentralNarrative);
+		if (NarrativeMoment == none) `AMLOG("Could not find XComNarrativeMoment: " $ default.YapCentralNarrative);
 		else { for (Idx = 0; Idx < Value; Idx++) `HQPRES.UINarrative(NarrativeMoment); }
 	}
 	// ADVENT Reinforcement
@@ -911,8 +915,14 @@ static function TriggerTrap(name TrapName, optional int Value = 1)
 	else if (TrapName == 'Earthquake')
 	{
 		EarthquakeTrapContext = XComGameStateContext_EarthquakeTrap(class'XComGameStateContext_EarthquakeTrap'.static.CreateXComGameStateContext());
-		EarthquakeTrapContext.Magnitude = `SYNC_RAND_STATIC(default.MaxMagnitude) + 1;
+		EarthquakeTrapContext.Magnitude = `SYNC_RAND_STATIC(default.EarthquakeMaxMagnitude) + 1;
 		`AMLOG("Magnitude " $ EarthquakeTrapContext.Magnitude);
+
+		EarthquakeTrapContext.ScreenShakeAnim = default.EarthquakeScreenShakeAnim;
+		EarthquakeTrapContext.ScreenShakeDuration = default.EarthquakeScreenShakeDuration;
+		EarthquakeTrapContext.ScreenShakeRate = default.EarthquakeScreenShakeRate;
+		EarthquakeTrapContext.Sound = SoundCue(`CONTENT.RequestGameArchetype(default.EarthquakeSound));
+		if (EarthquakeTrapContext.Sound == none) `AMLOG("Could not find SoundCue: " $ default.EarthquakeSound);
 
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', UnitState)
 		{
