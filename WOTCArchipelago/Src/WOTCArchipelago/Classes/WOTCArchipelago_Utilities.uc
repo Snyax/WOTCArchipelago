@@ -180,7 +180,7 @@ static function string EscapeURL(coerce string Str)
 	Str = Repl(Str, "|", "%7C");
 	Str = Repl(Str, "}", "%7D");
 	Str = Repl(Str, "~", "%7E");
-	Str = Repl(Str, "�", "%C2%A0");  // Non-breaking space (Alt+09632)
+	Str = Repl(Str, "�", "%C2%A0");  // Non-breaking space (U+00A0)
 	Str = Repl(Str, "�", "%C2%B4");
 
 	// Non-latin letter characters
