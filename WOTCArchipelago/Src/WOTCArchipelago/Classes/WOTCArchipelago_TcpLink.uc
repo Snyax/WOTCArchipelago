@@ -86,7 +86,24 @@ function TimeOut()
 
 function name GetCheckName()
 {
+	if (Left(Path, 7) != "/Check/")
+	{
+		`AMLOG("Path does not contain check name: " $ Path);
+		return '';
+	}
+
 	return name(Mid(Path, 7));
+}
+
+function string GetDeathText()
+{
+	if (Left(Path, 7) != "/Death/")
+	{
+		`AMLOG("Path does not contain death text: " $ Path);
+		return "";
+	}
+
+	return Mid(Path, 7);
 }
 
 function int SendText(coerce string str)

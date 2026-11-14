@@ -254,6 +254,13 @@ private function DeathResponseHandler(WOTCArchipelago_TcpLink Link, HttpResponse
 private function DeathErrorHandler(WOTCArchipelago_TcpLink Link, HttpResponse Resp)
 {
 	`AMLOG("Death Error Status: " $ Resp.ResponseCode);
+
+	if (Resp.ResponseCode == 400 && Link.GetDeathText() != "")
+	{
+		`AMLOG("SendDeath failed with 400 Bad Request, retrying with empty cause");
+		SendDeath("");
+	}
+
 	Link.Destroy();
 }
 
